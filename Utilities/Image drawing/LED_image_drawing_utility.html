@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>LED Screen Paint</title>
+<style type="text/css">
+div {
+	margin: auto;
+	text-align: center;
+	width: 100%
+}
+div#bin {
+	width: 900px;
+}
+input#wid, input#hei {
+	width: 4em;
+}
+#cvsled {
+	margin: auto;
+}
+</style>
+<script type="text/javascript">
+// Configuration options
+var sizeOfLED = 48; // Size of LED in pixels, including gutter
+var sizeOfGutter = 2; // Size of gutter between LEDs
+var colorOff = "#000";
+var colorOn = "#F00";
+var colorGutter = "#CCC";
+
+// Variables
+var canvasNode; // Main canvas node
+var cx; 		// 2d canvas context
+
+var map = new Array();
+
+var width;
+var height;
+
+function initialize(){
+	updateCanvasSize();
+	$('changecanvas').addEventListener("click", updateCanvasSize, false);
+}
+
+function canvasClick(oEvent) {
+	var pos_x = oEvent.offsetX?(oEvent.offsetX):oEvent.pageX-canvasNode.offsetLeft;
+	var pos_y = oEvent.offsetY?(oEvent.offsetY):oEvent.pageY-canvasNode.offsetTop;
+	
+	var cellX = Math.floor(pos_x/sizeOfLED);
+	var cellY = Math.floor(pos_y/sizeOfLED);
+		
+	map[cellX][cellY] = !map[cellX][cellY];
+	
+	canvasRender();
+	textUpdate();
+}
+
+function textUpdate() {
+	val = ""; //"const char NAME [] = {";
+	for(var i=0; i<width; ++i) {
+		for(var j=0; j<height; j+=4) {
+			val += "0b";
+			for(var k=3; k>=0; --k)
+				val += (map[i][j+k]?"1":"0") ;
+			val += ", ";
+		}
+	}
+	val = val.substr(0, val.length-2);// + "};";
+	
+	$('binary_out').value = val;
+}
+
+function updateCanvasSize(){
+	width = $('wid').value;
+	height = $('hei').value;
+	
+	if(isNaN(width) || isNaN(height)) {
+		alert("Incorrect width/height");
+		return;
+	}
+	
+	map = new Array();
+	for(var i=0; i<width; ++i) {
+		map[i] = new Array();
+		for(var j=0; j<height; ++j)
+			map[i][j]=0;
+	}
+	
+	
+	if(canvasNode)
+		$('main').removeChild(canvasNode);
+	
+	canvasNode = document.createElement("canvas");
+	canvasNode.width = sizeOfLED*width;
+	canvasNode.height = sizeOfLED*height;
+	cx = canvasNode.getContext("2d");
+
+	canvasNode.id = "cvsled";
+	$('main').appendChild(canvasNode);
+	$('cvsled').addEventListener("click", canvasClick, false);
+	
+	canvasRender();
+}
+
+function canvasRender() {
+	cx.fillStyle = colorOff;
+	cx.fillRect(0, 0, canvasNode.width, canvasNode.height);
+	
+	cx.fillStyle = colorOn;
+	for(var i=0; i<width; ++i)
+		for(var j=0; j<height; ++j)
+			if(map[i][j])
+				cx.fillRect(i*sizeOfLED, j*sizeOfLED, sizeOfLED-1, sizeOfLED-1);
+	
+	
+	cx.strokeStyle = colorGutter;
+	cx.lineWidth = sizeOfGutter;
+	cx.beginPath();
+	for(var i=0; i<=canvasNode.width; i+=sizeOfLED) {
+		cx.moveTo(i,0);
+		cx.lineTo(i,canvasNode.height);
+	}
+	for(var i=0; i<=canvasNode.height; i+=sizeOfLED) {
+		cx.moveTo(0, i);
+		cx.lineTo(canvasNode.width, i);
+	}
+	cx.stroke();
+}
+
+function $(e){
+	return document.getElementById(e);
+}
+
+window.addEventListener("load", initialize, false);
+</script>
+</head>
+
+<body>
+<div id="main"></div><br />
+<div id="bin">
+Width: <input type="text" id="wid" value="8" /> Height: <input type="text" id="hei" value="8" /> <input type="button" value="Change" id="changecanvas" /><br /><br />
+<textarea id="binary_out" style="width: 100%; height: 200px;"></textarea></div>
+</body>
+</html>
