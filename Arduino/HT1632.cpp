@@ -7,7 +7,7 @@
  * functions go here:
  */
 
-void HT1632Class::drawText(const char text [], int x, int y, const char font [][10], const char font_width [], char font_height, char gutter_space) {
+void HT1632Class::drawText(const char text [], int x, int y, const char font [], const char font_width [], char font_height, int font_glyph_step, char gutter_space) {
   int curr_x = x;
   char i = 0;
   char currchar;
@@ -32,8 +32,9 @@ void HT1632Class::drawText(const char text [], int x, int y, const char font [][
       break; // Stop rendering - all other characters are no longer within the screen 
     
     // Check to see if character is not too far left.
-    if(curr_x + font_width[currchar] >= 0)
-      drawImage(font[currchar], font_width[currchar], font_height, curr_x, y);
+    if(curr_x + font_width[currchar] >= 0){
+      drawImage(font, font_width[currchar], font_height, curr_x, y,  currchar*font_glyph_step);
+    }
     
     curr_x += font_width[currchar] + gutter_space;
     ++i;
@@ -41,7 +42,7 @@ void HT1632Class::drawText(const char text [], int x, int y, const char font [][
 }
 
 // Gives you the width, in columns, of a particular string.
-int HT1632Class::getTextWidth(const char text [], const char font [][10], const char font_width [], char font_height, char gutter_space) {
+int HT1632Class::getTextWidth(const char text [], const char font_width [], char font_height, char gutter_space) {
   int wd = 0;
   char i = 0;
   char currchar;
@@ -161,7 +162,7 @@ void HT1632Class::drawTarget(char targetBuffer) {
     _tgtBuffer = targetBuffer;
 }
 
-void HT1632Class::drawImage(const char * img, char width, char height, char x, char y){
+void HT1632Class::drawImage(const char * img, char width, char height, char x, char y, int offset){
   char length = width*height/4;
   char mask;
   
@@ -194,7 +195,7 @@ void HT1632Class::drawImage(const char * img, char width, char height, char x, c
         
       if(loc_y % 4 == 0) {
           mask = (height-loc_y >= 4)?0b00001111:(0b00001111 >> (4-(height-j))) & 0b00001111;
-          mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] = (mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] & (~mask) & 0b00001111) | (img[(int)ceil((float)height/4.0f)*i + j/4] & mask) | MASK_NEEDS_REWRITING;
+          mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] = (mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] & (~mask) & 0b00001111) | (img[(int)ceil((float)height/4.0f)*i + j/4 + offset] & mask) | MASK_NEEDS_REWRITING;
       } else {
         // If carryover_valid is NOT true, then this is the first set to be copied.
         //   If loc_y > 0, preserve the contents of the pixels above, copy to mem, and then copy remaining
@@ -205,7 +206,7 @@ void HT1632Class::drawImage(const char * img, char width, char height, char x, c
           if(loc_y > 0) {
             mask = (height-loc_y >= 4)?0b00001111:(0b00001111 >> (4-(height-j))) & 0b00001111; // Mask bottom
             mask = (0b00001111 << carryover_num) & mask; // Mask top
-            mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] = (mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] & (~mask) & 0b00001111) | ((img[(int)ceil((float)height/4.0f)*i + j/4] << carryover_num) & mask) | MASK_NEEDS_REWRITING;
+            mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] = (mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] & (~mask) & 0b00001111) | ((img[(int)ceil((float)height/4.0f)*i + j/4 + offset] << carryover_num) & mask) | MASK_NEEDS_REWRITING;
           }
           carryover_valid = true;
         } else {
@@ -220,10 +221,10 @@ void HT1632Class::drawImage(const char * img, char width, char height, char x, c
             // There is data in the carry-over buffer. Copy that data and the values from the current cell into mem.
             // The inclusion of a carryover_num term is to account for the presence of the carryover data  when calculating the bottom clipping.
             mask = (height-loc_y >= 4)?0b00001111:(0b00001111 >> (4-(height+carryover_num-j))) & 0b00001111; // Mask bottom
-            mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] = (mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] & (~mask) & 0b00001111) | ((img[(int)ceil((float)height/4.0f)*i + j/4] << carryover_num) & mask) | (carryover_y >> (4 - carryover_num) & mask) | MASK_NEEDS_REWRITING;
+            mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] = (mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] & (~mask) & 0b00001111) | ((img[(int)ceil((float)height/4.0f)*i + j/4 + offset] << carryover_num) & mask) | (carryover_y >> (4 - carryover_num) & mask) | MASK_NEEDS_REWRITING;
           }
         }
-        carryover_y = img[(int)ceil((float)height/4.0f)*i + j/4];
+        carryover_y = img[(int)ceil((float)height/4.0f)*i + j/4 + offset];
       }
     }
   }
