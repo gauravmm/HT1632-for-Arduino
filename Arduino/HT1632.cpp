@@ -32,8 +32,13 @@ void HT1632Class::drawText(const char text [], int x, int y, const char font [],
       break; // Stop rendering - all other characters are no longer within the screen 
     
     // Check to see if character is not too far left.
-    if(curr_x + font_width[currchar] >= 0){
+    if(curr_x + font_width[currchar] + gutter_space >= 0){
       drawImage(font, font_width[currchar], font_height, curr_x, y,  currchar*font_glyph_step);
+      
+      // Draw the gutter space
+      for(char j = 0; j < gutter_space; ++j)
+        drawImage(font, 1, font_height, curr_x + font_width[currchar] + j, y, 0);
+      
     }
     
     curr_x += font_width[currchar] + gutter_space;
@@ -101,7 +106,7 @@ void HT1632Class::initialize(int pinWR, int pinDATA) {
   _pinDATA = pinDATA;
   
   for(int i=0; i<_numActivePins; ++i){
-    pinMode(_pinCS[0], OUTPUT);
+    pinMode(_pinCS[i], OUTPUT);
     // Allocate new memory for mem
     mem[i] = (char *)malloc(ADDR_SPACE_SIZE);
     drawTarget(i);
@@ -117,13 +122,9 @@ void HT1632Class::initialize(int pinWR, int pinDATA) {
   //   and meta-data in the 4 most significant bits. Use bitmasking to read/write
   //   the meta-data.
   drawTarget(4);
-  clear(); // Clean out mem
-  
-  // Set drawTarget to default board.
-  drawTarget(0);
+  clear();
   // Clean out memory
   int i=0;
-  _globalNeedsRewriting = false;
   
   
   // Send configuration to chip:
@@ -131,10 +132,12 @@ void HT1632Class::initialize(int pinWR, int pinDATA) {
   //   The RC_MASTER_MODE command is not sent to the master. Since acting as
   //   the RC Master is the default behaviour, this is not needed. Sending
   //   this command causes problems in HT1632C (note the C at the end) chips. 
-  // This needs to be modified to automatically select a master and a slave.
-  select(0b0001); // Only works for a single board right now
   
+  // Send Master commands
+  
+  select(0b1111); // Assume that board 1 is the master.
   writeData(HT1632_ID_CMD, HT1632_ID_LEN);    // Command mode
+  
   writeCommand(HT1632_CMD_SYSDIS); // Turn off system oscillator
    // N-MOS or P-MOS open drain output and 8 or 16 common option
 #if   USE_NMOS == 1 && COM_SIZE == 8
@@ -148,13 +151,39 @@ void HT1632Class::initialize(int pinWR, int pinDATA) {
 #else
 #error Invalid USE_NMOS or COM_SIZE values! Change the values in HT1632.h.
 #endif
+  
+  if(false && _numActivePins > 1){
+    select(0b0001); // 
+    writeData(HT1632_ID_CMD, HT1632_ID_LEN);    // Command mode   
+    writeCommand(HT1632_CMD_RCCLK); // Switch system to MASTER mode    
+    select(0b1110); // All other boards are slaves
+    writeData(HT1632_ID_CMD, HT1632_ID_LEN);    // Command mode
+    
+    writeCommand(HT1632_CMD_MSTMD); // Switch system to SLAVE mode.
+    // The use of the MSTMD command to switch to slave is explained here:
+    // http://forums.parallax.com/showthread.php?117423-Electronics-I-O-%28outputs-to-common-anode-RGB-LED-matrix%29-question/page4
+    
+    
+    select(0b1111);
+    writeData(HT1632_ID_CMD, HT1632_ID_LEN);    // Command mode
+  }
+
   writeCommand(HT1632_CMD_SYSEN); //Turn on system
   writeCommand(HT1632_CMD_LEDON); // Turn on LED duty cycle generator
   writeCommand(HT1632_CMD_PWM(16)); // PWM 16/16 duty
-  select();
   
-  // Perform the initial rendering
-  render();
+  select();
+   
+  
+  for(int i=0; i<_numActivePins; ++i) {
+    drawTarget(i);
+    _globalNeedsRewriting[i] = true;
+    clear();
+    // Perform the initial rendering
+    render();
+  }
+  // Set drawTarget to default board.
+  drawTarget(0);
 }
 
 void HT1632Class::drawTarget(char targetBuffer) {
@@ -244,7 +273,7 @@ void HT1632Class::render() {
   
   bool isOpen = false;                   // Automatically compact sequential writes.
   for(int i=0; i<ADDR_SPACE_SIZE; ++i)
-    if(_globalNeedsRewriting || (mem[_tgtBuffer][i] & MASK_NEEDS_REWRITING)) {  // Does this memory chunk need to be written to?
+    if(_globalNeedsRewriting[_tgtBuffer] || (mem[_tgtBuffer][i] & MASK_NEEDS_REWRITING)) {  // Does this memory chunk need to be written to?
       if(!isOpen) {                      // If necessary, open the writing session by:
         select(selectionmask);           //   Selecting the chip
         writeData(HT1632_ID_WR, HT1632_ID_LEN);
@@ -262,7 +291,7 @@ void HT1632Class::render() {
     select();
     isOpen = false;
   }
-  _globalNeedsRewriting = false;
+  _globalNeedsRewriting[_tgtBuffer] = false;
 }
 
 // Set the brightness to an integer level between 1 and 16 (inclusive).
@@ -291,13 +320,13 @@ void HT1632Class::transition(char mode, int time){
         char * tmp = mem[_tgtBuffer];
         mem[_tgtBuffer] = mem[BUFFER_SECONDARY];
         mem[BUFFER_SECONDARY] = tmp;
-        _globalNeedsRewriting = true;
+        _globalNeedsRewriting[_tgtBuffer] = true;
       }
       break;
     case TRANSITION_NONE:
       for(char i=0; i < ADDR_SPACE_SIZE; ++i)
         mem[_tgtBuffer][i] = mem[BUFFER_SECONDARY][i]; // Needs to be redrawn 
-      _globalNeedsRewriting = true;
+      _globalNeedsRewriting[_tgtBuffer] = true;
       break;
     case TRANSITION_FADE:
       time /= 32;
@@ -377,7 +406,11 @@ void HT1632Class::writeSingleBit() {
 void HT1632Class::select(char mask) {
   for(int i=0, t=1; i<_numActivePins; ++i, t <<= 1){
     digitalWrite(_pinCS[i], (t & mask)?LOW:HIGH);
-  }
+    /*Serial.write(48+_pinCS[i]);
+    Serial.write((t & mask)?"LOW":"HIGH");
+    Serial.write('\n');
+  */}
+  //Serial.write('\n');
 }
 void HT1632Class::select() {
   for(int i=0; i<_numActivePins; ++i)
@@ -408,5 +441,4 @@ void HT1632Class::writeInt (int inp) {
 }
 
 HT1632Class HT1632;
-
 

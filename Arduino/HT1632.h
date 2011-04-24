@@ -37,14 +37,14 @@
 //   "secondary" buffer will be moved to that using some animation. transition() is a blocking function.
 // In all transitions other than the first one, the contents of the board buffer is lost and render()
 //   is automatically called.
-#define TRANSITION_BUFFER_SWAP  0x00
+#define TRANSITION_BUFFER_SWAP     0x00
   // Swap the current buffer and the transition buffer. This is the only transition that preserves
   //   the contents of the current buffer.
-#define TRANSITION_NONE         0x01
+#define TRANSITION_NONE            0x01
   // Simply copy the buffer.
-#define TRANSITION_FADE         0x02
-  // Uses the PWM feature to fade through black. Preserves current brightness level.
-
+#define TRANSITION_FADE            0x02
+  // Uses the PWM feature to fade through black. Does not preserve current brightness level.
+#define TRANSITION_WIPE_FROM_RIGHT 0x03
 // Wrap settings
 // For advanced rendering (currently only text rendering)
 
@@ -84,21 +84,6 @@
 // The HT1632 requires at least 50 ns between the change in data and the rising
 // edge of the WR signal. On a 16MHz processor, this provides 62.5ns per NOP. 
 
-/*
-// THIS FORMAT IS NO LONGER USED!
-// Compact binary format - getting and setting position _pos from the compact binary array _bin.
-// BIN_GET gives a zero (FALSE) or non-zero (TRUE) value.
-#define BIN_GET(_bin,_pos) ((_bin)[(_pos)/8] & (1 << (_pos) % 8))
-// BIN_GET_WORD_AT gets a 4-bit word from _bit, starting at _pos. _pos must be at a word boundary.
-#define BIN_GET_WORD_AT(_bin,_pos) (((_bin)[(_pos)/8] >> ((_pos) % 8)) & 0xF)
-// BIN_GET_NTH_WORD gets the (_n)th 4-bit word from _bit.
-#define BIN_GET_NTH_WORD(_bin,_n) (((_bin)[(_n)/2] >> (((_n) % 2)*4)) & 0xF)
-// BIN_SET_ON turns the value at _pos to TRUE 
-#define BIN_SET_ON(_bin,_pos) ((_bin)[(_pos)/8] = (_bin)[(_pos)/8] | (1 << (_pos) % 8))
-// BIN_SET_OFF turns the value at _pos to TRUE 
-#define BIN_SET_OFF(_bin,_pos) ((_bin)[(_pos)/8] = (_bin)[(_pos)/8] - ((_bin)[(_pos)/8] & (1 << (_pos) % 8)))
-*/
-
 // Standard command list.
 // This list is modified from original code by Bill Westfield
 
@@ -137,17 +122,18 @@ class HT1632Class
     char _pinWR;
     char _pinDATA;
     char _tgtBuffer;
-    char _globalNeedsRewriting;
+    char _globalNeedsRewriting [4];
     char * mem [5];
     void writeCommand(char);
     void writeData(char, char);
     void writeDataRev(char, char);
     void writeSingleBit();
     void initialize(int, int);
+    
+  public:
     void select();
     void select(char mask);
 
-  public:
     void begin(int pinCS1, int pinWR,  int pinDATA);
     void begin(int pinCS1, int pinCS2, int pinWR,   int pinDATA);
     void begin(int pinCS1, int pinCS2, int pinCS3,  int pinWR,   int pinDATA);
