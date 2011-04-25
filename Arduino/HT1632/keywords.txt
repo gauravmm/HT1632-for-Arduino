@@ -1,0 +1,34 @@
+#######################################
+# Syntax Highlighting for HT1632
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+HT1632	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+sendCommand	KEYWORD2
+drawTarget	KEYWORD2
+render	KEYWORD2
+transition	KEYWORD2
+clear	KEYWORD2
+drawImage	KEYWORD2
+drawText	KEYWORD2
+getTextWidth	KEYWORD2
+setBrightness	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+TRANSITION_BUFFER_SWAP	LITERAL1
+TRANSITION_NONE	LITERAL1
+TRANSITION_FADE	LITERAL1
+BUFFER_BOARD	LITERAL1
+BUFFER_SECONDARY	LITERAL1

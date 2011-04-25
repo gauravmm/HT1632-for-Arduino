@@ -1,6 +1,6 @@
-#include "HT1632.h"
-#include "images.h"
-#include "font_5x4.h"
+#include <font_5x4.h>
+#include <HT1632.h>
+#include <images.h>
 
 int i = 0;
 int wd;
