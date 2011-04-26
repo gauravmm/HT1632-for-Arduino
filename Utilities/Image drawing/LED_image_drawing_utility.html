@@ -39,6 +39,7 @@ var height;
 function initialize(){
 	updateCanvasSize();
 	$('changecanvas').addEventListener("click", updateCanvasSize, false);
+	$('loadimage').addEventListener("click", loadImage, false);
 }
 
 function canvasClick(oEvent) {
@@ -55,7 +56,7 @@ function canvasClick(oEvent) {
 }
 
 function textUpdate() {
-	val = ""; //"const char NAME [] = {";
+	val = ""; 
 	for(var i=0; i<width; ++i) {
 		for(var j=0; j<height; j+=4) {
 			val += "0b";
@@ -64,18 +65,47 @@ function textUpdate() {
 			val += ", ";
 		}
 	}
-	val = val.substr(0, val.length-2);// + "};";
+	val = val.substr(0, val.length - 2);
 	
 	$('binary_out').value = val;
 }
 
-function updateCanvasSize(){
+function loadImage() {
+	if(!updateCanvasSize()) {
+		alert("Image not loaded!");
+		return;
+	}
+	
+	// Load the image.
+	var src = $('binary_out').value.split(",");
+	var eleCountHeight = Math.ceil(height/4);
+	
+	
+	var i = 0; // Current array element.
+	
+	for(var x = 0; x < width; ++x)
+		for(var y = 0; y < height; y += 4) {
+			var currData = trim(src[i++]).replace("0b", "").split("");
+			currData.reverse(); // After reversing, [0] is the element with the lowest y-value.
+			for(var k = 0; (k < 4) && (y + k < height); ++k)
+				map[x][y+k] = (currData[k] == "0"?false:true);
+		}
+		
+	canvasRender();
+}
+
+// The following function is from http://blog.stevenlevithan.com/archives/faster-trim-javascript
+function trim(str) {
+	return str.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+}
+
+function updateCanvasSize() {
 	width = $('wid').value;
 	height = $('hei').value;
 	
 	if(isNaN(width) || isNaN(height)) {
 		alert("Incorrect width/height");
-		return;
+		return false;
 	}
 	
 	map = new Array();
@@ -84,7 +114,6 @@ function updateCanvasSize(){
 		for(var j=0; j<height; ++j)
 			map[i][j]=0;
 	}
-	
 	
 	if(canvasNode)
 		$('main').removeChild(canvasNode);
@@ -99,6 +128,8 @@ function updateCanvasSize(){
 	$('cvsled').addEventListener("click", canvasClick, false);
 	
 	canvasRender();
+	
+	return true;
 }
 
 function canvasRender() {
@@ -137,7 +168,7 @@ window.addEventListener("load", initialize, false);
 <body>
 <div id="main"></div><br />
 <div id="bin">
-Width: <input type="text" id="wid" value="8" /> Height: <input type="text" id="hei" value="8" /> <input type="button" value="Change" id="changecanvas" /><br /><br />
+Width: <input type="text" id="wid" value="8" /> Height: <input type="text" id="hei" value="8" /> <input type="button" value="Change" id="changecanvas" />  <input type="button" value="Load" id="loadimage" /><br /><br />
 <textarea id="binary_out" style="width: 100%; height: 200px;"></textarea></div>
 </body>
 </html>
