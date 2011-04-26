@@ -19,12 +19,8 @@ Here's some sample code to draw a blinking heart on the middle of a single scree
 
 void setup () {
 	HT1632.begin(pinCS1, pinWR, pinDATA);
-<<<<<<< HEAD
-	// Where pinCS1, pinWR and pinDATA are the numbers of the output pins that
-	// are connected to the appropriate pins on the HT1632.
-=======
-	// Where pinCS1, pinWR and pinDATA are the numbers of the output pins that are connected to the appropriate pins on the HT1632.
->>>>>>> 5c369b4b7ee1b9d7a08da3f857e27f6d32860495
+	// Where pinCS1, pinWR and pinDATA are the numbers of the output pins
+	// that are connected to the appropriate pins on the HT1632.
 }
 
 void loop () {
