@@ -48,21 +48,9 @@
 // Wrap settings
 // For advanced rendering (currently only text rendering)
 
-
 // Address space size (number of 4-bit words in HT1632 memory)
 // Exactly equal to the number of 4-bit address spaces available.
 #define ADDR_SPACE_SIZE (COM_SIZE*OUT_SIZE/4)
-
-// NOTE: THIS HARDCODES THE DIMENSIONS OF THE 3208! CHANGE!
-#define GET_ADDR_FROM_X_Y(_x,_y) ((_x)*2+(_y)/4)
-
-// Meta memory size (number of 8-bit bytes)
-// Used to store boolean metadata about the memory cells (1 bit per addressable cell).
-// usage e.g. needsRedrawing[META_MEM_SIZE]
-// THIS WILL SOON BE DEPRECIATED
-#define META_MEM_SIZE 8
-// You need to set this manually, or uncomment the below line:
-// #define META_MEM_SIZE MEM_SIZE/4
 
 // Use N-MOS (if 1) or P-MOS (if 0):
 #define USE_NMOS 1
@@ -132,6 +120,10 @@ class HT1632Class
     void select();
     void select(char mask);
     
+    // Debugging functions, write to Serial.
+    void writeInt(int);
+    void recursiveWriteUInt(int);
+    
   public:
     void begin(int pinCS1, int pinWR,  int pinDATA);
     void begin(int pinCS1, int pinCS2, int pinWR,   int pinDATA);
@@ -146,10 +138,6 @@ class HT1632Class
     void drawText(const char [], int x, int y, const char font [], const char font_width [], char font_height, int font_glyph_step, char gutter_space = 1);
     int getTextWidth(const char [], const char font_width [], char font_height, char gutter_space = 1);
     void setBrightness(char brightness, char selectionmask = 0b00010000);
-    
-    // Debugging
-    void writeInt(int);
-    void recursiveWriteUInt(int);
 };
 
 extern HT1632Class HT1632;
