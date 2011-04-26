@@ -25,7 +25,7 @@ var sizeOfLED = 48; // Size of LED in pixels, including gutter
 var sizeOfGutter = 2; // Size of gutter between LEDs
 var colorOff = "#000";
 var colorOn = "#F00";
-var colorGutter = "#CCC";
+var colorGutter = "#666";
 
 // Variables
 var canvasNode; // Main canvas node
@@ -35,9 +35,11 @@ var map = new Array();
 
 var width;
 var height;
+var renderCircle = false;
 
 function initialize(){
 	updateCanvasSize();
+	updateUseCircle();
 	$('changecanvas').addEventListener("click", updateCanvasSize, false);
 	$('loadimage').addEventListener("click", loadImage, false);
 }
@@ -140,7 +142,13 @@ function canvasRender() {
 	for(var i=0; i<width; ++i)
 		for(var j=0; j<height; ++j)
 			if(map[i][j])
-				cx.fillRect(i*sizeOfLED, j*sizeOfLED, sizeOfLED-1, sizeOfLED-1);
+				if(renderCircle) {
+					cx.beginPath();
+					cx.arc((i+0.5)*sizeOfLED, (j+0.5)*sizeOfLED, 0.45*sizeOfLED, 0, Math.PI * 2, false);
+				    cx.closePath();
+					cx.fill();
+				} else
+					cx.fillRect(i*sizeOfLED, j*sizeOfLED, sizeOfLED-1, sizeOfLED-1);
 	
 	
 	cx.strokeStyle = colorGutter;
@@ -161,6 +169,15 @@ function $(e){
 	return document.getElementById(e);
 }
 
+function updateUseCircle() {	
+	if($("chkUseCircle").checked)
+		renderCircle = true;
+	else 
+		renderCircle = false;
+		
+	canvasRender();
+}
+
 window.addEventListener("load", initialize, false);
 </script>
 </head>
@@ -168,7 +185,7 @@ window.addEventListener("load", initialize, false);
 <body>
 <div id="main"></div><br />
 <div id="bin">
-Width: <input type="text" id="wid" value="8" /> Height: <input type="text" id="hei" value="8" /> <input type="button" value="Change" id="changecanvas" />  <input type="button" value="Load" id="loadimage" /><br /><br />
+Width: <input type="text" id="wid" value="8" /> Height: <input type="text" id="hei" value="8" /> <input type="button" value="Change" id="changecanvas" /> <input type="button" value="Load" id="loadimage" /> <input type="checkbox" id="chkUseCircle" onclick="updateUseCircle()" />Use Circle<br /><br />
 <textarea id="binary_out" style="width: 100%; height: 200px;"></textarea></div>
 </body>
 </html>
