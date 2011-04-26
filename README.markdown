@@ -207,8 +207,3 @@ Future Plans
 2. Support for advanced transitions (moving entire screen contents around with a single command).
 3. "Export" feature that transmits the screen contents over Serial, so that animations can be captured in realtime.
 
-License
-=======
-
-Licensing information is available in the LICENSE file.
-
