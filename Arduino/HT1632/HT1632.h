@@ -57,6 +57,9 @@
 // There are known issues with this. If the default doesn't work,
 // try changing the value.
 
+// NOTE: THIS HARDCODES THE DIMENSIONS OF THE 3208! CHANGE!
+#define GET_ADDR_FROM_X_Y(_x,_y) ((_x)*2+(_y)/4)
+
 /*
  * END USER OPTIONS
  * Don't edit anything below unless you know what you are doing!
