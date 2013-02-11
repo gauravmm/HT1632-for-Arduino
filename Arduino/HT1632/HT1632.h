@@ -16,10 +16,25 @@
  * Change these options
  */
 
+// Uncomment line below in order to have this library supporting the bicolor
+// sure electronics DE-DP14112 (P4 32X16 RG Bicolor LED Dot Matrix Unit Board)
+// #define BICOLOR_MATRIX 1
+
+
+#ifdef BICOLOR_MATRIX
+#define COM_SIZE 16   /* max_number_of_y */
+#define OUT_SIZE 32   /* max_number_of_x make it 64 when there are 2 boards daisy chained */
+#define NUM_ACTIVE_CHIPS (OUT_SIZE / 8)
+#define NUM_COLORS 2  /* aka boards: 1)green and 2)red */
+#define MAX_BOARDS (NUM_COLORS + 1)  /* includes SECONDARY */
+#else // BICOLOR_MATRIX
 // Size of COM and OUT in bits:
 #define COM_SIZE 8
 #define OUT_SIZE 32
 // COM_SIZE MUST be either 8 or 16.
+#define NUM_COLORS 1
+#define MAX_BOARDS 5  /* includes SECONDARY */
+#endif // BICOLOR_MATRIX
 
 // Target buffer
 // Each board has a "render" buffer, and all boards share one "secondary" buffer. All calls to 
@@ -29,7 +44,7 @@
 //   buffer by calling transition(), with an appropriate transition. See transition() for more details.
 // board_num = [1..4]
 #define BUFFER_BOARD(board_num) ((board_num)-1)
-#define BUFFER_SECONDARY        0x04
+#define BUFFER_SECONDARY        ((MAX_BOARDS)-1)
 
 // Transition Modes
 // Transitions copies the contents of the "secondary" buffer to the currently selected board buffer.
@@ -57,8 +72,17 @@
 // There are known issues with this. If the default doesn't work,
 // try changing the value.
 
+#ifdef BICOLOR_MATRIX
+
+#define GET_CHIP_FROM_X_Y(_x,_y) (((_x)/16)+((_y)>7?2:0)+((_x)>31?4:0))  /*0 based*/
+#define GET_ADDR_FROM_X_Y(_x,_y) (((_x)%16)*2)+(((_y)%8)/4) + GET_CHIP_FROM_X_Y(_x,_y)*32
+
+#else // BICOLOR_MATRIX
+
 // NOTE: THIS HARDCODES THE DIMENSIONS OF THE 3208! CHANGE!
 #define GET_ADDR_FROM_X_Y(_x,_y) ((_x)*2+(_y)/4)
+
+#endif // BICOLOR_MATRIX
 
 /*
  * END USER OPTIONS
@@ -91,8 +115,8 @@
 #define HT1632_CMD_BLOFF  0x08	/* CMD= 0000-1000-x Blink ON */
 #define HT1632_CMD_BLON   0x09	/* CMD= 0000-1001-x Blink Off */
 #define HT1632_CMD_SLVMD  0x10	/* CMD= 0001-00xx-x Slave Mode */
-#define HT1632_CMD_MSTMD  0x14	/* CMD= 0001-01xx-x Master Mode */
-#define HT1632_CMD_RCCLK  0x18	/* CMD= 0001-10xx-x Use on-chip clock */
+#define HT1632_CMD_MSTMD  0x14	/* CMD= 0001-01xx-x Master Mode, on-chip clock */
+#define HT1632_CMD_RCCLK  0x18	/* CMD= 0001-10xx-x Master Mode, external clock */
 #define HT1632_CMD_EXTCLK 0x1C	/* CMD= 0001-11xx-x Use external clock */
 #define HT1632_CMD_COMS00 0x20	/* CMD= 0010-ABxx-x commons options */
 #define HT1632_CMD_COMS01 0x24	/* CMD= 0010-ABxx-x commons options */
@@ -108,13 +132,18 @@
 class HT1632Class
 {
   private:  
+#ifdef BICOLOR_MATRIX
+    char _pinForCS;
+    char _pinCLK;
+#else // BICOLOR_MATRIX
     char _pinCS [4];
     char _numActivePins;
+#endif // BICOLOR_MATRIX
     char _pinWR;
     char _pinDATA;
     char _tgtBuffer;
-    char _globalNeedsRewriting [4];
-    char * mem [5];
+    char _globalNeedsRewriting [MAX_BOARDS];
+    char * mem [MAX_BOARDS];
     void writeCommand(char);
     void writeData(char, char);
     void writeDataRev(char, char);
@@ -128,10 +157,14 @@ class HT1632Class
     void recursiveWriteUInt(int);
     
   public:
+#ifdef BICOLOR_MATRIX
+    void begin(int pinCS, int pinWR,  int pinDATA, int pinCLK);
+#else // BICOLOR_MATRIX
     void begin(int pinCS1, int pinWR,  int pinDATA);
     void begin(int pinCS1, int pinCS2, int pinWR,   int pinDATA);
     void begin(int pinCS1, int pinCS2, int pinCS3,  int pinWR,   int pinDATA);
     void begin(int pinCS1, int pinCS2, int pinCS3,  int pinCS4,  int pinWR,   int pinDATA);
+#endif // BICOLOR_MATRIX
     void sendCommand(char command);
     void drawTarget(char targetBuffer);
     void render();
