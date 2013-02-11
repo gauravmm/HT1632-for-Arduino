@@ -120,8 +120,8 @@ void HT1632Class::begin(int pinCS, int pinWR, int pinDATA, int pinCLK) {
     writeCommand(HT1632_CMD_RCCLK);  // Master Mode, external clock
     writeCommand(HT1632_CMD_SYSEN); // Turn on system
     writeCommand(HT1632_CMD_LEDON); // Turn on LED duty cycle generator
-    writeCommand(HT1632_CMD_BLOFF); // Blink off
     writeCommand(HT1632_CMD_PWM(16)); // PWM 16/16 duty
+    writeCommand(HT1632_CMD_BLOFF); // Blink off
     select(0);
   }
   
@@ -241,6 +241,7 @@ void HT1632Class::initialize(int pinWR, int pinDATA) {
   writeCommand(HT1632_CMD_SYSEN); //Turn on system
   writeCommand(HT1632_CMD_LEDON); // Turn on LED duty cycle generator
   writeCommand(HT1632_CMD_PWM(16)); // PWM 16/16 duty
+  writeCommand(HT1632_CMD_BLOFF); // Be sure blink is off.
   
   select();
    
@@ -257,6 +258,15 @@ void HT1632Class::initialize(int pinWR, int pinDATA) {
 }
 
 #endif // BICOLOR_MATRIX
+
+void HT1632Class::setPixel(int loc_x, int loc_y, bool datum) {
+  if (datum) {
+    mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] = (mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] | (1 << (loc_y % 4))) | MASK_NEEDS_REWRITING;
+  }
+  else {
+    mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] = (mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] & ~(1 << (loc_y % 4))) | MASK_NEEDS_REWRITING;
+  }
+}
 
 void HT1632Class::drawTarget(char targetBuffer) {
 #ifdef BICOLOR_MATRIX
