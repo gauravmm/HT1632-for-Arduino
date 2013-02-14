@@ -74,7 +74,7 @@
 
 #ifdef BICOLOR_MATRIX
 
-#define GET_CHIP_FROM_X_Y(_x,_y) (((_x)/16)+((_y)>7?2:0)+((_x)>31?4:0))  /*0 based*/
+#define GET_CHIP_FROM_X_Y(_x,_y) (((_x)/16)+((_y)>7?2:0)+((_x)>31?2:0))  /*0 based*/
 #define GET_ADDR_FROM_X_Y(_x,_y) (((_x)%16)*2)+(((_y)%8)/4) + GET_CHIP_FROM_X_Y(_x,_y)*32
 
 #else // BICOLOR_MATRIX
