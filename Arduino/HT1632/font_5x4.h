@@ -4,6 +4,9 @@
  * Gaurav Manek, 2011
  */
 
+#ifndef __FONT5X4_H
+#define __FONT5X4_H
+
 #define FONT_5X4_HEIGHT  5
 
 #define FONT_5X4_STEP_GLYPH 10
@@ -94,3 +97,4 @@ char FONT_5X4_WIDTH [] = {
   3, 3, 4, 2, 4, 2, 3, 3
 };
 
+#endif  // __FONT5X4_H
