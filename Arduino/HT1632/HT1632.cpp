@@ -79,6 +79,71 @@ int HT1632Class::getTextWidth(const char text [], const char font_width [], char
  * and perform the rendering go here:
  */
 
+#ifdef BICOLOR_MATRIX
+
+void HT1632Class::begin(int pinCS, int pinWR, int pinDATA, int pinCLK) {
+  _pinForCS = pinCS;
+  _pinWR = pinWR;
+  _pinDATA = pinDATA;
+  _pinCLK = pinCLK;
+
+  int i=0;
+  
+  // Allocate new memory for mem (including secondary)
+  for(i=0; i < MAX_BOARDS; ++i) mem[i] = (char *) malloc(ADDR_SPACE_SIZE);
+
+  pinMode(_pinForCS, OUTPUT);
+  pinMode(_pinWR, OUTPUT);
+  pinMode(_pinDATA, OUTPUT);
+  pinMode(_pinCLK, OUTPUT);
+  
+  // Each 8-bit mem array element stores data in the 4 least significant bits,
+  //   and meta-data in the 4 most significant bits. Use bitmasking to read/write
+  //   the meta-data.
+
+  // Send configuration to chip:
+  // This configuration is from the HT1632 datasheet, with one modification:
+  //   The RC_MASTER_MODE command is not sent to the master. Since acting as
+  //   the RC Master is the default behaviour, this is not needed. Sending
+  //   this command causes problems in HT1632C (note the C at the end) chips. 
+
+  select(0);
+
+  // Send Master commands
+  for(i=1; i <= NUM_ACTIVE_CHIPS; ++i) {
+    select(i);  // 1 based
+    writeData(HT1632_ID_CMD, HT1632_ID_LEN);    // Command mode
+  
+    writeCommand(HT1632_CMD_SYSDIS); // Turn off system oscillator
+    writeCommand(HT1632_CMD_COMS00); // 16*32, PMOS drivers
+    //    writeCommand(HT1632_CMD_MSTMD);  // Master Mode (!!!!)
+    writeCommand(HT1632_CMD_RCCLK);  // Master Mode, external clock
+    writeCommand(HT1632_CMD_SYSEN); // Turn on system
+    writeCommand(HT1632_CMD_LEDON); // Turn on LED duty cycle generator
+    writeCommand(HT1632_CMD_PWM(16)); // PWM 16/16 duty
+    writeCommand(HT1632_CMD_BLOFF); // Blink off
+    select(0);
+  }
+  
+  for(i=0; i < MAX_BOARDS; ++i) {
+    _globalNeedsRewriting[i] = false;
+    drawTarget(i);
+    clear();
+    render(); // Perform the initial rendering
+  }
+
+  // Set drawTarget to default board.
+  drawTarget(0);
+
+  digitalWrite(_pinWR, LOW);
+}
+
+void HT1632Class::initialize(int pinWR, int pinDATA) {
+  // noop, all init work was done above
+}
+
+#else // BICOLOR_MATRIX
+
 void HT1632Class::begin(int pinCS1, int pinWR, int pinDATA) {
   _numActivePins = 1;
   _pinCS[0] = pinCS1;
@@ -176,6 +241,7 @@ void HT1632Class::initialize(int pinWR, int pinDATA) {
   writeCommand(HT1632_CMD_SYSEN); //Turn on system
   writeCommand(HT1632_CMD_LEDON); // Turn on LED duty cycle generator
   writeCommand(HT1632_CMD_PWM(16)); // PWM 16/16 duty
+  writeCommand(HT1632_CMD_BLOFF); // Be sure blink is off.
   
   select();
    
@@ -191,9 +257,24 @@ void HT1632Class::initialize(int pinWR, int pinDATA) {
   drawTarget(0);
 }
 
+#endif // BICOLOR_MATRIX
+
+void HT1632Class::setPixel(int loc_x, int loc_y, bool datum) {
+  if (datum) {
+    mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] = (mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] | (1 << (loc_y % 4))) | MASK_NEEDS_REWRITING;
+  }
+  else {
+    mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] = (mem[_tgtBuffer][GET_ADDR_FROM_X_Y(loc_x,loc_y)] & ~(1 << (loc_y % 4))) | MASK_NEEDS_REWRITING;
+  }
+}
+
 void HT1632Class::drawTarget(char targetBuffer) {
+#ifdef BICOLOR_MATRIX
+  if (targetBuffer >= 0 && targetBuffer < MAX_BOARDS) _tgtBuffer = targetBuffer;
+#else // BICOLOR_MATRIX
   if(targetBuffer == 0x04 || (targetBuffer >= 0 && targetBuffer < _numActivePins))  
     _tgtBuffer = targetBuffer;
+#endif // BICOLOR_MATRIX
 }
 
 void HT1632Class::drawImage(const char * img, char width, char height, char x, char y, int offset){
@@ -265,12 +346,44 @@ void HT1632Class::drawImage(const char * img, char width, char height, char x, c
 }
 
 void HT1632Class::clear(){
-  for(char i=0; i < ADDR_SPACE_SIZE; ++i)
-    mem[_tgtBuffer][i] = 0x00 | MASK_NEEDS_REWRITING; // Needs to be redrawn 
+  // Note: Must use int below, because in BICOLOR screens, addr space is greater than 255
+  for(int i=0; i < ADDR_SPACE_SIZE; ++i) mem[_tgtBuffer][i] = 0x00 | MASK_NEEDS_REWRITING; // Needs to be redrawn 
 }
 
 // Draw the contents of map to screen, for memory addresses that have the needsRedrawing flag
 void HT1632Class::render() {
+#ifdef BICOLOR_MATRIX
+  if(_tgtBuffer >= BUFFER_SECONDARY || _tgtBuffer < 0) return;
+  
+  // char selectionmask = _tgtBuffer + 1;
+  char nChip;
+  char nChipOpen = -1;                   // Automatically compact sequential writes.
+  char chipBasedAddress;
+  const int colorOffset = _tgtBuffer * 32;      // Color (aka board) memory offset in chip 
+  
+  for(int i=0; i < ADDR_SPACE_SIZE; ++i) {
+    if (_globalNeedsRewriting[_tgtBuffer] || 
+	(mem[_tgtBuffer][i] & MASK_NEEDS_REWRITING)) {  // Does this memory chunk need to be written to?
+      nChip = (i / 32) + 1;  // calculate nChip we will need to talk to (1 based!)
+      if ( nChipOpen != nChip ) {                      // If necessary, open the writing session by:
+	chipBasedAddress = i % 32;
+        select(nChip);       //   Selecting the chip
+        writeData(HT1632_ID_WR, HT1632_ID_LEN);
+        writeData(chipBasedAddress + colorOffset, HT1632_ADDR_LEN);   //   Selecting the memory address
+        nChipOpen = nChip;
+      }
+      writeDataRev(mem[_tgtBuffer][i], HT1632_WORD_LEN); // Write the data in reverse.
+    } else {                               // If a previous sequential write session is open, close it.
+      if (nChipOpen != -1) { select(0); nChipOpen = -1; }
+    }
+  }
+  if (nChipOpen != -1) { // Close the stream at the end
+    select(0);
+    // nChipOpen = -1;
+  }
+
+#else // BICOLOR_MATRIX
+
   if(_tgtBuffer >= _numActivePins || _tgtBuffer < 0)
     return;
   
@@ -296,12 +409,26 @@ void HT1632Class::render() {
     select();
     isOpen = false;
   }
+
+#endif // BICOLOR_MATRIX
+
   _globalNeedsRewriting[_tgtBuffer] = false;
 }
 
 // Set the brightness to an integer level between 1 and 16 (inclusive).
 // Uses the PWM feature to set the brightness.
 void HT1632Class::setBrightness(char brightness, char selectionmask) {
+#ifdef BICOLOR_MATRIX
+  // NOTE: selectionmask is not really useful in BICOLOR boards, because
+  //       it is not granular enough to the end user. Same applies to blink.
+  //       So we just did not bother with it in here...
+  for(int i=1; i <= NUM_ACTIVE_CHIPS; ++i) {
+    select(i);  // 1 based!
+    writeData(HT1632_ID_CMD, HT1632_ID_LEN);    // Command mode
+    writeCommand(HT1632_CMD_PWM(brightness));   // Set brightness
+  }
+  select(0);
+#else // BICOLOR_MATRIX
   if(selectionmask == 0b00010000) {
     if(_tgtBuffer < _numActivePins)
       selectionmask = 0b0001 << _tgtBuffer;
@@ -313,11 +440,16 @@ void HT1632Class::setBrightness(char brightness, char selectionmask) {
   writeData(HT1632_ID_CMD, HT1632_ID_LEN);    // Command mode
   writeCommand(HT1632_CMD_PWM(brightness));   // Set brightness
   select();
+#endif // BICOLOR_MATRIX
 }
 
 void HT1632Class::transition(char mode, int time){
+#ifdef BICOLOR_MATRIX
+  if(_tgtBuffer >= BUFFER_SECONDARY || _tgtBuffer < 0) return;
+#else // BICOLOR_MATRIX
   if(_tgtBuffer >= _numActivePins || _tgtBuffer < 0)
     return;
+#endif // BICOLOR_MATRIX
   
   switch(mode) {
     case TRANSITION_BUFFER_SWAP:
@@ -329,7 +461,7 @@ void HT1632Class::transition(char mode, int time){
       }
       break;
     case TRANSITION_NONE:
-      for(char i=0; i < ADDR_SPACE_SIZE; ++i)
+      for(int i=0; i < ADDR_SPACE_SIZE; ++i)
         mem[_tgtBuffer][i] = mem[BUFFER_SECONDARY][i]; // Needs to be redrawn 
       _globalNeedsRewriting[_tgtBuffer] = true;
       break;
@@ -405,6 +537,38 @@ void HT1632Class::writeSingleBit() {
   // Lower it again, in preparation for the next cycle.
   digitalWrite(_pinWR, LOW);
 }
+
+#ifdef BICOLOR_MATRIX
+
+//Output a clock pulse
+static inline void outputCLK_Pulse(char _pinCLK) { digitalWrite(_pinCLK, HIGH); digitalWrite(_pinCLK, LOW); }
+
+// Choose a chip. This function sets the correct CS line to LOW, and the rest to HIGH
+// Call the function with no arguments to deselect all chips.
+void HT1632Class::select(char mask) {
+  char tmp = 0;
+
+  if (mask < 0) { // Enable all HT1632C
+    digitalWrite(_pinForCS, LOW);
+    for (tmp = 0; tmp < NUM_ACTIVE_CHIPS; tmp++) outputCLK_Pulse(_pinCLK);
+  } else if (mask == 0) { //Disable all HT1632Cs
+    digitalWrite(_pinForCS, HIGH);
+    for(tmp = 0; tmp < NUM_ACTIVE_CHIPS; tmp++) outputCLK_Pulse(_pinCLK);
+  } else {
+    digitalWrite(_pinForCS, HIGH);
+    for(tmp = 0; tmp < NUM_ACTIVE_CHIPS; tmp++) outputCLK_Pulse(_pinCLK);
+    digitalWrite(_pinForCS, LOW);
+    outputCLK_Pulse(_pinCLK);
+    digitalWrite(_pinForCS, HIGH);
+    for(tmp = 1 ; tmp < mask; tmp++) outputCLK_Pulse(_pinCLK);
+  }
+}
+void HT1632Class::select() {
+  select(0);
+}
+
+#else // BICOLOR_MATRIX
+
 // Choose a chip. This function sets the correct CS line to LOW, and the rest to HIGH
 // Call the function with no arguments to deselect all chips.
 // Call the function with a bitmask (0b4321) to select specific chips. 0b1111 selects all. 
@@ -421,6 +585,8 @@ void HT1632Class::select() {
   for(int i=0; i<_numActivePins; ++i)
     digitalWrite(_pinCS[i], HIGH);
 }
+
+#endif // BICOLOR_MATRIX
 
 /*
  * HELPER FUNCTIONS
