@@ -7,8 +7,7 @@ int wd;
 
 void setup () {
   Serial.begin(9600);
-c
-  
+  HT1632.begin(12, 10, 9);
   
   /* 
   // Multiple screen control
@@ -25,7 +24,7 @@ c
   HT1632.render();
   //*/
     
-  /*
+  //*
   // Buffer swap transition example.
   // Fill board buffer with one image
   HT1632.drawTarget(BUFFER_BOARD(1));
@@ -56,10 +55,10 @@ void loop () {
   
   // Font rendering example
   
-  //  HT1632.transition(TRANSITION_BUFFER_SWAP);
-  //  HT1632.render();
+  HT1632.transition(TRANSITION_BUFFER_SWAP);
+  HT1632.render();
   
-  //*
+  /*
   HT1632.drawTarget(BUFFER_BOARD(1));
   HT1632.clear();
   HT1632.drawText("Hello, how are you?", 2*OUT_SIZE - i, 2, FONT_5X4, FONT_5X4_WIDTH, FONT_5X4_HEIGHT, FONT_5X4_STEP_GLYPH);

@@ -37,6 +37,8 @@ var width;
 var height;
 var renderCircle = false;
 
+var pixelsInAByte = 4;
+
 function initialize(){
 	updateCanvasSize();
 	updateUseCircle();
@@ -60,9 +62,9 @@ function canvasClick(oEvent) {
 function textUpdate() {
 	val = ""; 
 	for(var i=0; i<width; ++i) {
-		for(var j=0; j<height; j+=4) {
+		for(var j=0; j<height; j+=8) {
 			val += "0b";
-			for(var k=3; k>=0; --k)
+			for(var k=pixelsInAByte - 1; k>=0; --k)
 				val += (map[i][j+k]?"1":"0") ;
 			val += ", ";
 		}
@@ -86,13 +88,13 @@ function loadImage() {
 	var i = 0; // Current array element.
 	
 	for(var x = 0; x < width; ++x)
-		for(var y = 0; y < height; y += 4) {
+		for(var y = 0; y < height; y += pixelsInAByte) {
 			var currData = trim(src[i++]).replace("0b", "").split("");
 			currData.reverse(); // After reversing, [0] is the element with the lowest y-value.
-			for(var k = 0; (k < 4) && (y + k < height); ++k)
+			for(var k = 0; (k < pixelsInAByte) && (y + k < height); ++k)
 				map[x][y+k] = (currData[k] == "0"?false:true);
 		}
-		
+	
 	canvasRender();
 }
 
