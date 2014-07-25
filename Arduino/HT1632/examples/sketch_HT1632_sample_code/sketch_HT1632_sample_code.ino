@@ -7,7 +7,7 @@ int wd;
 
 void setup () {
   Serial.begin(9600);
-  HT1632.begin(12, 13, 10, 9);
+c
   
   
   /* 
