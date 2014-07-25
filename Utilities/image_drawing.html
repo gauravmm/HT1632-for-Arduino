@@ -56,16 +56,15 @@ function canvasClick(oEvent) {
 	map[cellX][cellY] = !map[cellX][cellY];
 	
 	canvasRender();
-	textUpdate();
 }
 
 function textUpdate() {
 	val = ""; 
 	for(var i=0; i<width; ++i) {
-		for(var j=0; j<height; j+=8) {
+		for(var j=0; j<height; j+=pixelsInAByte) {
 			val += "0b";
 			for(var k=pixelsInAByte - 1; k>=0; --k)
-				val += (map[i][j+k]?"1":"0") ;
+				val += (map[i][j+k]?"1":"0");
 			val += ", ";
 		}
 	}
@@ -75,15 +74,9 @@ function textUpdate() {
 }
 
 function loadImage() {
-	if(!updateCanvasSize()) {
-		alert("Image not loaded!");
-		return;
-	}
-	
 	// Load the image.
 	var src = $('binary_out').value.split(",");
-	var eleCountHeight = Math.ceil(height/4);
-	
+	var eleCountHeight = Math.ceil(height/pixelsInAByte);
 	
 	var i = 0; // Current array element.
 	
@@ -165,6 +158,8 @@ function canvasRender() {
 		cx.lineTo(canvasNode.width, i);
 	}
 	cx.stroke();
+
+	textUpdate();
 }
 
 function $(e){
@@ -180,6 +175,14 @@ function updateUseCircle() {
 	canvasRender();
 }
 
+function updatePxPerByte() {
+	var v = $("pxInByte").value * 1;
+	if(v > 0 && v <= 8){
+		pixelsInAByte = v;
+		canvasRender();
+	}
+}
+
 window.addEventListener("load", initialize, false);
 </script>
 </head>
@@ -187,7 +190,7 @@ window.addEventListener("load", initialize, false);
 <body>
 <div id="main"></div><br />
 <div id="bin">
-Width: <input type="text" id="wid" value="8" /> Height: <input type="text" id="hei" value="8" /> <input type="button" value="Change" id="changecanvas" /> <input type="button" value="Load" id="loadimage" /> <input type="checkbox" id="chkUseCircle" onclick="updateUseCircle()" />Use Circle<br /><br />
+Width: <input type="number" id="wid" min="1" value="6" onclick="updateCanvasSize()" /> Height: <input type="number" id="hei" min="1" value="8" onclick="updateCanvasSize()" /> <input type="button" value="Change" id="changecanvas" /> <input type="button" value="Load" id="loadimage" /> Pixels per Byte: <input type="number" id="pxInByte" min="1" max="8" value="8" onchange="updatePxPerByte()" /> <input type="checkbox" id="chkUseCircle" onclick="updateUseCircle()" />Use Circle <br /><br />
 <textarea id="binary_out" style="width: 100%; height: 200px;"></textarea></div>
 </body>
 </html>
