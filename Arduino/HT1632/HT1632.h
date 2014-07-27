@@ -21,6 +21,11 @@
 #define OUT_SIZE 32
 // COM_SIZE MUST be either 8 or 16.
 
+// Pixels in a single byte of the internal image representation:
+#define PIXELS_PER_BYTE 8
+// Pixels per word of the HT1632 image representation.
+#define PIXELS_PER_WORD 4
+
 // Target buffer
 // Each board has a "render" buffer, and all boards share one "secondary" buffer. All calls to 
 //   render() draw the contents of the render buffer of the currently selected board to the board
@@ -58,18 +63,13 @@
 // try changing the value.
 
 // NOTE: THIS HARDCODES THE DIMENSIONS OF THE 3208! CHANGE!
-#define GET_ADDR_FROM_X_Y(_x,_y) ((_x)*2+(_y)/4)
+#define GET_ADDR_FROM_X_Y(_x,_y) ((_x)*((COM_SIZE)/(PIXELS_PER_BYTE))+(_y)/(PIXELS_PER_BYTE))
 
 /*
  * END USER OPTIONS
  * Don't edit anything below unless you know what you are doing!
  */
  
-// Meta-data masks
-#define MASK_NEEDS_REWRITING 0b00010000
-
-// Round up to multiple of 4 function
-
 // NO-OP Definition
 #define NOP(); __asm__("nop\n\t"); 
 // The HT1632 requires at least 50 ns between the change in data and the rising
