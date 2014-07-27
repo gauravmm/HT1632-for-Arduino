@@ -6,8 +6,6 @@ int i = 0;
 int wd;
 
 void setup () {
-  Serial.begin(9600);
-  Serial.write("Started!");
   HT1632.begin(12, 10, 9);
   
   // Buffer swap transition example.

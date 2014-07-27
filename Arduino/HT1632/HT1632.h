@@ -127,11 +127,8 @@ class HT1632Class
     void initialize(uint8_t, uint8_t);
     void select();
     void select(char mask);
-    
-    // Debugging functions, write to Serial.
-//    void writeInt(int);
-//    void recursiveWriteUInt(int);
-//    void writeByte(byte b);
+    int getCharWidth(int font_end [], uint8_t font_index);
+    int getCharOffset(int font_end [], uint8_t font_index);
     
   public:
     void begin(uint8_t pinCS1, uint8_t pinWR,  uint8_t pinDATA);
@@ -144,8 +141,8 @@ class HT1632Class
     void transition(uint8_t mode, int time = 1000); // Time is in milliseconds.
     void clear();
     void drawImage(const uint8_t * img, uint8_t width, uint8_t height, int8_t x, int8_t y, int offset = 0);
-//    void drawText(const char [], int x, int y, const char font [], const char font_width [], char font_height, int font_glyph_step, char gutter_space = 1);
-//    int getTextWidth(const char [], const char font_width [], char font_height, char gutter_space = 1);
+    void drawText(const char text [], int x, int y, byte font [], int font_end [], uint8_t font_height, uint8_t gutter_space = 1);
+    int getTextWidth(const char text [], int font_end [], uint8_t gutter_space = 1);
     void setBrightness(char brightness, char selectionmask = 0b00010000);
 };
 

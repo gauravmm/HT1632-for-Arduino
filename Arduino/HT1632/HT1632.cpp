@@ -6,8 +6,7 @@
  * functions go here:
  */
 
-/*
-void HT1632Class::drawText(const char text [], int x, int y, const char font [], const char font_width [], char font_height, int font_glyph_step, char gutter_space) {
+void HT1632Class::drawText(const char text [], int x, int y, byte font [], int font_end [], uint8_t font_height, uint8_t gutter_space) {
 	int curr_x = x;
 	char i = 0;
 	char currchar;
@@ -34,42 +33,62 @@ void HT1632Class::drawText(const char text [], int x, int y, const char font [],
 			break; // Stop rendering - all other characters are no longer within the screen 
 		
 		// Check to see if character is not too far left.
-		if(curr_x + font_width[currchar] + gutter_space >= 0){
-			drawImage(font, font_width[currchar], font_height, curr_x, y,  currchar*font_glyph_step);
+		int chr_width = getCharWidth(font_end, currchar);
+		if(curr_x + chr_width + gutter_space >= 0){
+			drawImage(font, chr_width, font_height, curr_x, y,  getCharOffset(font_end, currchar));
 			
 			// Draw the gutter space
 			for(char j = 0; j < gutter_space; ++j)
-			drawImage(font, 1, font_height, curr_x + font_width[currchar] + j, y, 0);
-			
+			drawImage(font, 1, font_height, curr_x + chr_width + j, y, 0);
 		}
 		
-		curr_x += font_width[currchar] + gutter_space;
+		curr_x += chr_width + gutter_space;
 		++i;
 	}
 }
 
 // Gives you the width, in columns, of a particular string.
-int HT1632Class::getTextWidth(const char text [], const char font_width [], char font_height, char gutter_space) {
+int HT1632Class::getTextWidth(const char text [], int font_end [], uint8_t gutter_space) {
 	int wd = 0;
 	char i = 0;
 	char currchar;
 	
 	while(true){  
-	if(text[i] == '\0')
-		return wd - gutter_space;
-		
-	currchar = text[i] - 32;
-	if(currchar >= 65 && currchar <= 90) // If character is lower-case, automatically make it upper-case
-		currchar -= 32; // Make this character uppercase.
-	if(currchar < 0 || currchar >= 64) { // If out of bounds, skip
+		if (text[i] == '\0') {
+			return wd - gutter_space;
+		}
+			
+		currchar = text[i] - 32;
+		if (currchar >= 65 && currchar <= 90) { // If character is lower-case, automatically make it upper-case
+			currchar -= 32;                     // Make this character uppercase.
+		}
+
+		if (currchar < 0 || currchar >= 64) {   // If out of bounds, skip
+			++i;
+			continue; // Skip this character.
+		}
+
+		wd += getCharWidth(font_end, currchar) + gutter_space;
 		++i;
-		continue; // Skip this character.
-	}
-	wd += font_width[currchar] + gutter_space;
-	++i;
 	}
 }
-*/
+
+int HT1632Class::getCharWidth(int font_end [], uint8_t font_index) {
+	if(font_index == 0) {
+		return font_end[0];
+	}
+	// The width is the difference between the ending index of
+	//  this and the previous characters:
+	return font_end[font_index] - font_end[font_index - 1];
+}
+
+int HT1632Class::getCharOffset(int font_end [], uint8_t font_index) {
+	if(font_index == 0) {
+		return 0;
+	}
+	// The offset is in the ending index of the previous character:
+	return font_end[font_index - 1];
+}
 
 /*
  * MID LEVEL FUNCTIONS
@@ -155,8 +174,6 @@ void HT1632Class::initialize(uint8_t pinWR, uint8_t pinDATA) {
 	writeCommand(HT1632_CMD_PWM(16)); // PWM 16/16 duty
 	
 	select();
-	
-	Serial.write("End initialize");
 	
 	for(uint8_t i = 0; i < _numActivePins; ++i) {
 		drawTarget(i);
@@ -344,7 +361,7 @@ void HT1632Class::writeCommand(char data) {
 // Integer write to display. Used to write commands/addresses.
 // PRECONDITION: WR is LOW
 void HT1632Class::writeData(byte data, uint8_t len) {
-	for(int j = len-1, t = 1 << (len - 1); j>=0; --j, t >>= 1){
+	for(int j = len - 1, t = 1 << (len - 1); j >= 0; --j, t >>= 1){
 		// Set the DATA pin to the correct state
 		digitalWrite(_pinDATA, ((data & t) == 0)?LOW:HIGH);
 		NOP(); // Delay 
@@ -355,21 +372,7 @@ void HT1632Class::writeData(byte data, uint8_t len) {
 		digitalWrite(_pinWR, LOW);
 	}
 }
-// REVERSED Integer write to display. Used to write cell values.
-// PRECONDITION: WR is LOW
-void HT1632Class::writeDataRev(byte data, uint8_t len) {
-	for(uint8_t j = 0; j < len; ++j){
-		// Set the DATA pin to the correct state
-		digitalWrite(_pinDATA, data & 1);
-		NOP(); // Delay
-		// Raise the WR momentarily to allow the device to capture the data
-		digitalWrite(_pinWR, HIGH);
-		NOP(); // Delay
-		// Lower it again, in preparation for the next cycle.
-		digitalWrite(_pinWR, LOW);
-		data >>= 1;
-	}
-}
+
 // Write single bit to display, used as padding between commands.
 // PRECONDITION: WR is LOW
 void HT1632Class::writeSingleBit() {
@@ -396,41 +399,4 @@ void HT1632Class::select() {
 	}
 }
 
-/*
- * HELPER FUNCTIONS
- * "Would you like some fries with that?"
- */
-/*
-void HT1632Class::recursiveWriteUInt (int inp) {
-	if(inp <= 0) return;
-	int rd = inp % 10;
-	recursiveWriteUInt(inp/10);
-	Serial.write(48+rd);
-}
-
-void HT1632Class::writeInt (int inp) {
-	Serial.write("@ ");
-	if(inp == 0)
-	Serial.write('0');
-	else
-	if (inp < 0){
-		Serial.write('-');
-		recursiveWriteUInt(-inp);
-	} else {
-		recursiveWriteUInt(inp);
-	}
-	Serial.write('\n');
-}
-
-void HT1632Class::writeByte (byte inp) {
-	uint8_t a = 0b1 << 7;
-	while (a) {
-		Serial.write((a & inp)?'1':'0');
-		a >>= 1;
-	}
-	Serial.write("\n");
-}
-*/
-
 HT1632Class HT1632;
-
