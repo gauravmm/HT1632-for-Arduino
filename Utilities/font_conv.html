@@ -32,7 +32,7 @@ function loadImage() {
 	for(var i = 0; i < 64; ++i){
 		sb = i * FONT_5X4_STEP;
 		for(j = 0; j < FONT_5X4_WIDTH[i]; ++j) {
-			rv += "0b" + src[sb + 2*j + 1] + "" + src[sb + 2*j] + ", ";
+			rv += "0b" + (src[sb + 2*j + 1] + "" + src[sb + 2*j]).split("").reverse().join("") + ", ";
 		}
 		rv += " // " + String.fromCharCode(32 + i);
 		rv += "\n";

@@ -129,8 +129,9 @@ class HT1632Class
     void select(char mask);
     
     // Debugging functions, write to Serial.
-    void writeInt(int);
-    void recursiveWriteUInt(int);
+//    void writeInt(int);
+//    void recursiveWriteUInt(int);
+//    void writeByte(byte b);
     
   public:
     void begin(uint8_t pinCS1, uint8_t pinWR,  uint8_t pinDATA);

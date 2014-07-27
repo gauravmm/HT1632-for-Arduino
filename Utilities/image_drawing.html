@@ -37,7 +37,8 @@ var width;
 var height;
 var renderCircle = false;
 
-var pixelsInAByte = 4;
+var pixelsInAByte = 8;
+var reversePixelOrder = false;
 
 function initialize(){
 	updateCanvasSize();
@@ -63,8 +64,13 @@ function textUpdate() {
 	for(var i=0; i<width; ++i) {
 		for(var j=0; j<height; j+=pixelsInAByte) {
 			val += "0b";
-			for(var k=pixelsInAByte - 1; k>=0; --k)
-				val += (map[i][j+k]?"1":"0");
+			if (reversePixelOrder) {
+				for(var k=pixelsInAByte - 1; k>=0; --k)
+					val += (map[i][j+k]?"1":"0");
+			} else {
+				for(var k=0; k < pixelsInAByte; ++k)
+					val += (map[i][j+k]?"1":"0");
+			}
 			val += ", ";
 		}
 	}
@@ -83,7 +89,9 @@ function loadImage() {
 	for(var x = 0; x < width; ++x)
 		for(var y = 0; y < height; y += pixelsInAByte) {
 			var currData = trim(src[i++]).replace("0b", "").split("");
-			currData.reverse(); // After reversing, [0] is the element with the lowest y-value.
+			if (reversePixelOrder) {
+				currData.reverse(); // After reversing, [0] is the element with the lowest y-value.
+			}
 			for(var k = 0; (k < pixelsInAByte) && (y + k < height); ++k)
 				map[x][y+k] = (currData[k] == "0"?false:true);
 		}
@@ -183,14 +191,35 @@ function updatePxPerByte() {
 	}
 }
 
+function updateReversePixel() {
+	reversePixelOrder = $("chkRevPx").checked;
+	canvasRender();
+}
+
 window.addEventListener("load", initialize, false);
+
+function settings(ver) {
+	if (ver == 1) {
+		pixelsInAByte = 4;
+		reversePixelOrder = true;
+	} else {
+		pixelsInAByte = 8;
+		reversePixelOrder = false;
+	}
+	$("chkRevPx").checked = reversePixelOrder;
+	$("pxInByte").value = pixelsInAByte;
+	canvasRender();
+}
+
 </script>
 </head>
 
 <body>
 <div id="main"></div><br />
 <div id="bin">
-Width: <input type="number" id="wid" min="1" value="6" onclick="updateCanvasSize()" /> Height: <input type="number" id="hei" min="1" value="8" onclick="updateCanvasSize()" /> <input type="button" value="Change" id="changecanvas" /> <input type="button" value="Load" id="loadimage" /> Pixels per Byte: <input type="number" id="pxInByte" min="1" max="8" value="8" onchange="updatePxPerByte()" /> <input type="checkbox" id="chkUseCircle" onclick="updateUseCircle()" />Use Circle <br /><br />
+Width: <input type="number" id="wid" min="1" value="6" onclick="updateCanvasSize()" /> Height: <input type="number" id="hei" min="1" value="8" onclick="updateCanvasSize()" /> <input type="button" value="Change" id="changecanvas" /> <input type="button" value="Load" id="loadimage" /> <input type="checkbox" id="chkUseCircle" onclick="updateUseCircle()" />Use Circle<br />
+Pixels per Byte: <input type="number" id="pxInByte" min="1" max="8" value="8" onchange="updatePxPerByte()" /><input type="checkbox" id="chkRevPx" onclick="updateReversePixel()" />Reverse Pixel Order <button onclick="settings(1)">Version 1.0</button><button onclick="settings(2)">Version 2.0</button><br />
+<br />
 <textarea id="binary_out" style="width: 100%; height: 200px;"></textarea></div>
 </body>
 </html>

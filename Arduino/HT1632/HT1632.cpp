@@ -115,21 +115,16 @@ void HT1632Class::initialize(uint8_t pinWR, uint8_t pinDATA) {
 		drawTarget(i);
 		clear(); // Clean out mem
 	}
+
 	pinMode(_pinWR, OUTPUT);
 	pinMode(_pinDATA, OUTPUT);
 	
 	select();
 	
 	mem[4] = (byte *)malloc(ADDR_SPACE_SIZE);
-	// Each 8-bit mem array element stores data in the 4 least significant bits,
-	//   and meta-data in the 4 most significant bits. Use bitmasking to read/write
-	//   the meta-data.
 	drawTarget(4);
 	clear();
-	// Clean out memory
-	uint8_t i=0;
-	
-	
+
 	// Send configuration to chip:
 	// This configuration is from the HT1632 datasheet, with one modification:
 	//   The RC_MASTER_MODE command is not sent to the master. Since acting as
@@ -154,31 +149,16 @@ void HT1632Class::initialize(uint8_t pinWR, uint8_t pinDATA) {
 #else
 #error Invalid USE_NMOS or COM_SIZE values! Change the values in HT1632.h.
 #endif
-	
-	if(false && _numActivePins > 1){
-	select(0b0001); // 
-	writeData(HT1632_ID_CMD, HT1632_ID_LEN);    // Command mode   
-	writeCommand(HT1632_CMD_RCCLK); // Switch system to MASTER mode    
-	select(0b1110); // All other boards are slaves
-	writeData(HT1632_ID_CMD, HT1632_ID_LEN);    // Command mode
-	
-	writeCommand(HT1632_CMD_MSTMD); // Switch system to SLAVE mode.
-	// The use of the MSTMD command to switch to slave is explained here:
-	// http://forums.parallax.com/showthread.php?117423-Electronics-I-O-%28outputs-to-common-anode-RGB-LED-matrix%29-question/page4
-	
-	
-	select(0b1111);
-	writeData(HT1632_ID_CMD, HT1632_ID_LEN);    // Command mode
-	}
 
 	writeCommand(HT1632_CMD_SYSEN); //Turn on system
 	writeCommand(HT1632_CMD_LEDON); // Turn on LED duty cycle generator
 	writeCommand(HT1632_CMD_PWM(16)); // PWM 16/16 duty
 	
 	select();
-	 
 	
-	for(int i=0; i<_numActivePins; ++i) {
+	Serial.write("End initialize");
+	
+	for(uint8_t i = 0; i < _numActivePins; ++i) {
 		drawTarget(i);
 		clear();
 		// Perform the initial rendering
@@ -257,7 +237,7 @@ void HT1632Class::drawImage(const byte * img, uint8_t width, uint8_t height, int
 			// Shift the data to the bits of highest significance
 			uint8_t copyData = img[img_offset + (bytesPerColumn * src_x) + (src_y >> 3)] << (src_y & 0b111);
 			// Shift data to match the destination place value.
-			copyData = copyData >> (dst_y & 0b111);
+			copyData >>= (dst_y & 0b111);
 
 			// Perform the copy
 			mem[_tgtBuffer][GET_ADDR_FROM_X_Y(dst_x, dst_y)] =  // Put in destination
@@ -285,14 +265,14 @@ void HT1632Class::render() {
 	}
 	
 	select(0b0001 << _tgtBuffer); // Selecting the chip
+	
+	writeData(HT1632_ID_WR, HT1632_ID_LEN);
+	writeData(0, HT1632_ADDR_LEN); // Selecting the memory address
 
 	for(uint8_t i = 0; i < ADDR_SPACE_SIZE; ++i) {
-		writeData(HT1632_ID_WR, HT1632_ID_LEN);
-		writeData(i, HT1632_ADDR_LEN); // Selecting the memory address
 		// Write the higher bits before the the lower bits.
-		writeDataRev(mem[_tgtBuffer][i >> HT1632_WORD_LEN], HT1632_WORD_LEN); // Write the data in reverse.
-		writeDataRev(mem[_tgtBuffer][i], HT1632_WORD_LEN); // Write the data in reverse.
-		// TODO: Write two bytes to memory.
+		writeData(mem[_tgtBuffer][i] >> HT1632_WORD_LEN, HT1632_WORD_LEN); // Write the data in reverse.
+		writeData(mem[_tgtBuffer][i], HT1632_WORD_LEN); // Write the data in reverse.
 	}
 
 	select(); // Close the stream at the end
@@ -364,7 +344,7 @@ void HT1632Class::writeCommand(char data) {
 // Integer write to display. Used to write commands/addresses.
 // PRECONDITION: WR is LOW
 void HT1632Class::writeData(byte data, uint8_t len) {
-	for(uint8_t j=len-1, t = 1 << (len - 1); j>=0; --j, t >>= 1){
+	for(int j = len-1, t = 1 << (len - 1); j>=0; --j, t >>= 1){
 		// Set the DATA pin to the correct state
 		digitalWrite(_pinDATA, ((data & t) == 0)?LOW:HIGH);
 		NOP(); // Delay 
@@ -420,7 +400,7 @@ void HT1632Class::select() {
  * HELPER FUNCTIONS
  * "Would you like some fries with that?"
  */
-
+/*
 void HT1632Class::recursiveWriteUInt (int inp) {
 	if(inp <= 0) return;
 	int rd = inp % 10;
@@ -429,15 +409,28 @@ void HT1632Class::recursiveWriteUInt (int inp) {
 }
 
 void HT1632Class::writeInt (int inp) {
+	Serial.write("@ ");
 	if(inp == 0)
 	Serial.write('0');
 	else
 	if (inp < 0){
 		Serial.write('-');
 		recursiveWriteUInt(-inp);
-	} else 
+	} else {
 		recursiveWriteUInt(inp);
+	}
+	Serial.write('\n');
 }
+
+void HT1632Class::writeByte (byte inp) {
+	uint8_t a = 0b1 << 7;
+	while (a) {
+		Serial.write((a & inp)?'1':'0');
+		a >>= 1;
+	}
+	Serial.write("\n");
+}
+*/
 
 HT1632Class HT1632;
 
