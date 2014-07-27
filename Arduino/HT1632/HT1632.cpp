@@ -1,17 +1,12 @@
 #include "HT1632.h"
 
-#if (ARDUINO >= 100)
-	#include <Arduino.h>
-#else
-	#include <WProgram.h>
-#endif
-
 /*
  * HIGH LEVEL FUNCTIONS
  * Functions that perform advanced tasks using lower-level
  * functions go here:
  */
 
+/*
 void HT1632Class::drawText(const char text [], int x, int y, const char font [], const char font_width [], char font_height, int font_glyph_step, char gutter_space) {
 	int curr_x = x;
 	char i = 0;
@@ -74,6 +69,7 @@ int HT1632Class::getTextWidth(const char text [], const char font_width [], char
 	++i;
 	}
 }
+*/
 
 /*
  * MID LEVEL FUNCTIONS
@@ -81,25 +77,25 @@ int HT1632Class::getTextWidth(const char text [], const char font_width [], char
  * and perform the rendering go here:
  */
 
-void HT1632Class::begin(int pinCS1, int pinWR, int pinDATA) {
+void HT1632Class::begin(uint8_t pinCS1, uint8_t pinWR, uint8_t pinDATA) {
 	_numActivePins = 1;
 	_pinCS[0] = pinCS1;
 	initialize(pinWR, pinDATA);
 }
-void HT1632Class::begin(int pinCS1, int pinCS2, int pinWR,   int pinDATA) {
+void HT1632Class::begin(uint8_t pinCS1, uint8_t pinCS2, uint8_t pinWR,   uint8_t pinDATA) {
 	_numActivePins = 2;
 	_pinCS[0] = pinCS1;
 	_pinCS[1] = pinCS2;
 	initialize(pinWR, pinDATA);
 }
-void HT1632Class::begin(int pinCS1, int pinCS2, int pinCS3,  int pinWR,   int pinDATA) {
+void HT1632Class::begin(uint8_t pinCS1, uint8_t pinCS2, uint8_t pinCS3,  uint8_t pinWR,   uint8_t pinDATA) {
 	_numActivePins = 3;
 	_pinCS[0] = pinCS1;
 	_pinCS[1] = pinCS2;
 	_pinCS[2] = pinCS3;
 	initialize(pinWR, pinDATA);
 }
-void HT1632Class::begin(int pinCS1, int pinCS2, int pinCS3,  int pinCS4,  int pinWR,   int pinDATA) {
+void HT1632Class::begin(uint8_t pinCS1, uint8_t pinCS2, uint8_t pinCS3,  uint8_t pinCS4,  uint8_t pinWR,   uint8_t pinDATA) {
 	_numActivePins = 4;
 	_pinCS[0] = pinCS1;
 	_pinCS[1] = pinCS2;
@@ -108,30 +104,30 @@ void HT1632Class::begin(int pinCS1, int pinCS2, int pinCS3,  int pinCS4,  int pi
 	initialize(pinWR, pinDATA);
 }
 
-void HT1632Class::initialize(int pinWR, int pinDATA) {
+void HT1632Class::initialize(uint8_t pinWR, uint8_t pinDATA) {
 	_pinWR = pinWR;
 	_pinDATA = pinDATA;
 	
-	for(int i=0; i<_numActivePins; ++i){
-	pinMode(_pinCS[i], OUTPUT);
-	// Allocate new memory for mem
-	mem[i] = (char *)malloc(ADDR_SPACE_SIZE);
-	drawTarget(i);
-	clear(); // Clean out mem
+	for(uint8_t i=0; i<_numActivePins; ++i){
+		pinMode(_pinCS[i], OUTPUT);
+		// Allocate new memory for mem
+		mem[i] = (byte *)malloc(ADDR_SPACE_SIZE);
+		drawTarget(i);
+		clear(); // Clean out mem
 	}
 	pinMode(_pinWR, OUTPUT);
 	pinMode(_pinDATA, OUTPUT);
 	
 	select();
 	
-	mem[4] = (char *)malloc(ADDR_SPACE_SIZE);
+	mem[4] = (byte *)malloc(ADDR_SPACE_SIZE);
 	// Each 8-bit mem array element stores data in the 4 least significant bits,
 	//   and meta-data in the 4 most significant bits. Use bitmasking to read/write
 	//   the meta-data.
 	drawTarget(4);
 	clear();
 	// Clean out memory
-	int i=0;
+	uint8_t i=0;
 	
 	
 	// Send configuration to chip:
@@ -183,11 +179,10 @@ void HT1632Class::initialize(int pinWR, int pinDATA) {
 	 
 	
 	for(int i=0; i<_numActivePins; ++i) {
-	drawTarget(i);
-	_globalNeedsRewriting[i] = true;
-	clear();
-	// Perform the initial rendering
-	render();
+		drawTarget(i);
+		clear();
+		// Perform the initial rendering
+		render();
 	}
 	// Set drawTarget to default board.
 	drawTarget(0);
@@ -198,11 +193,11 @@ void HT1632Class::drawTarget(uint8_t targetBuffer) {
 	_tgtBuffer = targetBuffer;
 }
 
-#IF PIXELS_PER_BYTE != 8
-	#ERROR "The current drawImage implementation requires PIXELS_PER_BYTE == 8"
-#ENDIF
+#if PIXELS_PER_BYTE != 8
+	#error "The current drawImage implementation requires PIXELS_PER_BYTE == 8"
+#endif
 
-void HT1632Class::drawImage(const uint8_t * img, uint8_t width, uint8_t height, int8_t x, int8_t y, int img_offset) {
+void HT1632Class::drawImage(const byte * img, uint8_t width, uint8_t height, int8_t x, int8_t y, int img_offset) {
 	uint8_t bytesPerColumn = height/PIXELS_PER_BYTE;
 	// Equivalent to taking Math.ceil(), without working with floats
 	if (bytesPerColumn * PIXELS_PER_BYTE < height)
@@ -222,7 +217,6 @@ void HT1632Class::drawImage(const uint8_t * img, uint8_t width, uint8_t height, 
 	while (src_x < width) {
 		if(dst_x < 0) {
 			// Skip this column if it is too far to the left.
-			offset += bytesPerColumn;
 			src_x++;
 			dst_x++;
 			continue;
@@ -261,7 +255,7 @@ void HT1632Class::drawImage(const uint8_t * img, uint8_t width, uint8_t height, 
 			dst_copyMask <<= (8 - (dst_y & 0b111) - copyInNextStep);
 
 			// Shift the data to the bits of highest significance
-			uint8_t copyData = img[img_offset + ] << (src_y & 0b111);
+			uint8_t copyData = img[img_offset + (bytesPerColumn * src_x) + (src_y >> 3)] << (src_y & 0b111);
 			// Shift data to match the destination place value.
 			copyData = copyData >> (dst_y & 0b111);
 
@@ -272,15 +266,6 @@ void HT1632Class::drawImage(const uint8_t * img, uint8_t width, uint8_t height, 
 
 			src_y += copyInNextStep;
 			dst_y += copyInNextStep;
-			/* Copy bytes without alignment:
-			 *          0       8       16
-			 * To:      |-------|-------|
-			 * From: |-------|-------|
-			 *      -3       5       13
-			 *       A  B    C  D    E
-			 * 
-			 */
-
 		}
 
 		src_x++;
@@ -290,37 +275,27 @@ void HT1632Class::drawImage(const uint8_t * img, uint8_t width, uint8_t height, 
 
 void HT1632Class::clear(){
 	for(char i=0; i < ADDR_SPACE_SIZE; ++i)
-	mem[_tgtBuffer][i] = 0x00 | MASK_NEEDS_REWRITING; // Needs to be redrawn 
+	mem[_tgtBuffer][i] = 0x00; // Needs to be redrawn
 }
 
 // Draw the contents of map to screen, for memory addresses that have the needsRedrawing flag
 void HT1632Class::render() {
-	if(_tgtBuffer >= _numActivePins || _tgtBuffer < 0)
-	return;
-	
-	char selectionmask = 0b0001 << _tgtBuffer;
-	
-	bool isOpen = false;                   // Automatically compact sequential writes.
-	for(int i=0; i<ADDR_SPACE_SIZE; ++i)
-	if(_globalNeedsRewriting[_tgtBuffer] || (mem[_tgtBuffer][i] & MASK_NEEDS_REWRITING)) {  // Does this memory chunk need to be written to?
-		if(!isOpen) {                      // If necessary, open the writing session by:
-			select(selectionmask);           //   Selecting the chip
-			writeData(HT1632_ID_WR, HT1632_ID_LEN);
-			writeData(i, HT1632_ADDR_LEN);   //   Selecting the memory address
-			isOpen = true;
-		}
-		writeDataRev(mem[_tgtBuffer][i], HT1632_WORD_LEN); // Write the data in reverse.
-	} else                               // If a previous sequential write session is open, close it.
-		if(isOpen) {
-		select();
-		isOpen = false;
-		}
-
-	if(isOpen) {                           // Close the stream at the end
-	select();
-	isOpen = false;
+	if(_tgtBuffer >= _numActivePins || _tgtBuffer < 0) {
+		return;
 	}
-	_globalNeedsRewriting[_tgtBuffer] = false;
+	
+	select(0b0001 << _tgtBuffer); // Selecting the chip
+
+	for(uint8_t i = 0; i < ADDR_SPACE_SIZE; ++i) {
+		writeData(HT1632_ID_WR, HT1632_ID_LEN);
+		writeData(i, HT1632_ADDR_LEN); // Selecting the memory address
+		// Write the higher bits before the the lower bits.
+		writeDataRev(mem[_tgtBuffer][i >> HT1632_WORD_LEN], HT1632_WORD_LEN); // Write the data in reverse.
+		writeDataRev(mem[_tgtBuffer][i], HT1632_WORD_LEN); // Write the data in reverse.
+		// TODO: Write two bytes to memory.
+	}
+
+	select(); // Close the stream at the end
 }
 
 // Set the brightness to an integer level between 1 and 16 (inclusive).
@@ -339,29 +314,27 @@ void HT1632Class::setBrightness(char brightness, char selectionmask) {
 	select();
 }
 
-void HT1632Class::transition(char mode, int time){
+void HT1632Class::transition(uint8_t mode, int time){
 	if(_tgtBuffer >= _numActivePins || _tgtBuffer < 0)
 	return;
 	
 	switch(mode) {
 	case TRANSITION_BUFFER_SWAP:
 		{
-		char * tmp = mem[_tgtBuffer];
-		mem[_tgtBuffer] = mem[BUFFER_SECONDARY];
-		mem[BUFFER_SECONDARY] = tmp;
-		_globalNeedsRewriting[_tgtBuffer] = true;
+			byte * tmp = mem[_tgtBuffer];
+			mem[_tgtBuffer] = mem[BUFFER_SECONDARY];
+			mem[BUFFER_SECONDARY] = tmp;
 		}
 		break;
 	case TRANSITION_NONE:
 		for(char i=0; i < ADDR_SPACE_SIZE; ++i)
-		mem[_tgtBuffer][i] = mem[BUFFER_SECONDARY][i]; // Needs to be redrawn 
-		_globalNeedsRewriting[_tgtBuffer] = true;
+			mem[_tgtBuffer][i] = mem[BUFFER_SECONDARY][i]; // Needs to be redrawn 
 		break;
 	case TRANSITION_FADE:
 		time /= 32;
 		for(int i = 15; i > 0; --i) {
-		setBrightness(i);
-		delay(time);
+			setBrightness(i);
+			delay(time);
 		}
 		clear();
 		render();
@@ -370,8 +343,8 @@ void HT1632Class::transition(char mode, int time){
 		render();
 		delay(time);
 		for(int i = 2; i <= 16; ++i) {
-		setBrightness(i);
-		delay(time);
+			setBrightness(i);
+			delay(time);
 		}
 		break;
 	}
@@ -390,31 +363,31 @@ void HT1632Class::writeCommand(char data) {
 } 
 // Integer write to display. Used to write commands/addresses.
 // PRECONDITION: WR is LOW
-void HT1632Class::writeData(char data, char len) {
-	for(int j=len-1, t = 1 << (len - 1); j>=0; --j, t >>= 1){
-	// Set the DATA pin to the correct state
-	digitalWrite(_pinDATA, ((data & t) == 0)?LOW:HIGH);
-	NOP(); // Delay 
-	// Raise the WR momentarily to allow the device to capture the data
-	digitalWrite(_pinWR, HIGH);
-	NOP(); // Delay
-	// Lower it again, in preparation for the next cycle.
-	digitalWrite(_pinWR, LOW);
+void HT1632Class::writeData(byte data, uint8_t len) {
+	for(uint8_t j=len-1, t = 1 << (len - 1); j>=0; --j, t >>= 1){
+		// Set the DATA pin to the correct state
+		digitalWrite(_pinDATA, ((data & t) == 0)?LOW:HIGH);
+		NOP(); // Delay 
+		// Raise the WR momentarily to allow the device to capture the data
+		digitalWrite(_pinWR, HIGH);
+		NOP(); // Delay
+		// Lower it again, in preparation for the next cycle.
+		digitalWrite(_pinWR, LOW);
 	}
 }
 // REVERSED Integer write to display. Used to write cell values.
 // PRECONDITION: WR is LOW
-void HT1632Class::writeDataRev(char data, char len) {
-	for(int j=0; j<len; ++j){
-	// Set the DATA pin to the correct state
-	digitalWrite(_pinDATA, data & 1);
-	NOP(); // Delay
-	// Raise the WR momentarily to allow the device to capture the data
-	digitalWrite(_pinWR, HIGH);
-	NOP(); // Delay
-	// Lower it again, in preparation for the next cycle.
-	digitalWrite(_pinWR, LOW);
-	data >>= 1;
+void HT1632Class::writeDataRev(byte data, uint8_t len) {
+	for(uint8_t j = 0; j < len; ++j){
+		// Set the DATA pin to the correct state
+		digitalWrite(_pinDATA, data & 1);
+		NOP(); // Delay
+		// Raise the WR momentarily to allow the device to capture the data
+		digitalWrite(_pinWR, HIGH);
+		NOP(); // Delay
+		// Lower it again, in preparation for the next cycle.
+		digitalWrite(_pinWR, LOW);
+		data >>= 1;
 	}
 }
 // Write single bit to display, used as padding between commands.
@@ -434,16 +407,13 @@ void HT1632Class::writeSingleBit() {
 // Call the function with a bitmask (0b4321) to select specific chips. 0b1111 selects all. 
 void HT1632Class::select(char mask) {
 	for(int i=0, t=1; i<_numActivePins; ++i, t <<= 1){
-	digitalWrite(_pinCS[i], (t & mask)?LOW:HIGH);
-	/*Serial.write(48+_pinCS[i]);
-	Serial.write((t & mask)?"LOW":"HIGH");
-	Serial.write('\n');
-	*/}
-	//Serial.write('\n');
+		digitalWrite(_pinCS[i], (t & mask)?LOW:HIGH);
+	}
 }
 void HT1632Class::select() {
-	for(int i=0; i<_numActivePins; ++i)
-	digitalWrite(_pinCS[i], HIGH);
+	for(int i=0; i<_numActivePins; ++i) {
+		digitalWrite(_pinCS[i], HIGH);
+	}
 }
 
 /*

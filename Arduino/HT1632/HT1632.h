@@ -2,7 +2,7 @@
   HT1632.h - Library for communicating with the popular HT1632/HT1632C
   LED controllers. This library provides higher-level access (including
   text drawing) for these chips. Currently, the library supports writing 
-  to a single chip at a time, and has been tested with a single
+  to a single chip at a time, and has been tested with two
   Sure Electronics 3208 5mm red board.
   
   Created by Gaurav Manek, April 8, 2011.
@@ -10,6 +10,14 @@
 */
 #ifndef HT1632_h
 #define HT1632_h
+
+#include <Arduino.h>
+
+// Custom typedefs
+typedef unsigned char uint8_t;
+typedef unsigned char byte;
+// typedef char int8_t;
+
 
 /*
  * USER OPTIONS
@@ -23,8 +31,6 @@
 
 // Pixels in a single byte of the internal image representation:
 #define PIXELS_PER_BYTE 8
-// Pixels per word of the HT1632 image representation.
-#define PIXELS_PER_WORD 4
 
 // Target buffer
 // Each board has a "render" buffer, and all boards share one "secondary" buffer. All calls to 
@@ -55,7 +61,7 @@
 
 // Address space size (number of 4-bit words in HT1632 memory)
 // Exactly equal to the number of 4-bit address spaces available.
-#define ADDR_SPACE_SIZE (COM_SIZE*OUT_SIZE/4)
+#define ADDR_SPACE_SIZE (COM_SIZE * OUT_SIZE / PIXELS_PER_BYTE)
 
 // Use N-MOS (if 1) or P-MOS (if 0):
 #define USE_NMOS 1
@@ -108,18 +114,17 @@
 class HT1632Class
 {
   private:  
-    char _pinCS [4];
-    char _numActivePins;
-    char _pinWR;
-    char _pinDATA;
-    char _tgtBuffer;
-    char _globalNeedsRewriting [4];
-    char * mem [5];
+    uint8_t _pinCS [4];
+    uint8_t _numActivePins;
+    uint8_t _pinWR;
+    uint8_t _pinDATA;
+    uint8_t _tgtBuffer;
+    byte * mem [5];
     void writeCommand(char);
-    void writeData(char, char);
-    void writeDataRev(char, char);
+    void writeData(byte, uint8_t);
+    void writeDataRev(byte, uint8_t);
     void writeSingleBit();
-    void initialize(int, int);
+    void initialize(uint8_t, uint8_t);
     void select();
     void select(char mask);
     
@@ -128,18 +133,18 @@ class HT1632Class
     void recursiveWriteUInt(int);
     
   public:
-    void begin(int pinCS1, int pinWR,  int pinDATA);
-    void begin(int pinCS1, int pinCS2, int pinWR,   int pinDATA);
-    void begin(int pinCS1, int pinCS2, int pinCS3,  int pinWR,   int pinDATA);
-    void begin(int pinCS1, int pinCS2, int pinCS3,  int pinCS4,  int pinWR,   int pinDATA);
-    void sendCommand(char command);
-    void drawTarget(char targetBuffer);
+    void begin(uint8_t pinCS1, uint8_t pinWR,  uint8_t pinDATA);
+    void begin(uint8_t pinCS1, uint8_t pinCS2, uint8_t pinWR,   uint8_t pinDATA);
+    void begin(uint8_t pinCS1, uint8_t pinCS2, uint8_t pinCS3,  uint8_t pinWR,   uint8_t pinDATA);
+    void begin(uint8_t pinCS1, uint8_t pinCS2, uint8_t pinCS3,  uint8_t pinCS4,  uint8_t pinWR,   uint8_t pinDATA);
+    void sendCommand(uint8_t command);
+    void drawTarget(uint8_t targetBuffer);
     void render();
-    void transition(char mode, int time = 1000); // Time is in miliseconds.
+    void transition(uint8_t mode, int time = 1000); // Time is in milliseconds.
     void clear();
-    void drawImage(const char * img, char width, char height, char x, char y, int offset = 0);
-    void drawText(const char [], int x, int y, const char font [], const char font_width [], char font_height, int font_glyph_step, char gutter_space = 1);
-    int getTextWidth(const char [], const char font_width [], char font_height, char gutter_space = 1);
+    void drawImage(const uint8_t * img, uint8_t width, uint8_t height, int8_t x, int8_t y, int offset = 0);
+//    void drawText(const char [], int x, int y, const char font [], const char font_width [], char font_height, int font_glyph_step, char gutter_space = 1);
+//    int getTextWidth(const char [], const char font_width [], char font_height, char gutter_space = 1);
     void setBrightness(char brightness, char selectionmask = 0b00010000);
 };
 

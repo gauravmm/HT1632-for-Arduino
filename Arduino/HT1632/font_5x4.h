@@ -9,7 +9,7 @@
 #define FONT_5X4_HEIGHT  5
 // Number of bytes per glyph 
 
-uint8_t FONT_5X4 [] = {
+byte FONT_5X4 [] = {
     0b00000000,  // SPACE
     0b00010111,  // !
     0b00000011, 0b00000000, 0b00000011,  // "
