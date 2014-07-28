@@ -127,7 +127,7 @@ class HT1632Class
     void initialize(uint8_t, uint8_t);
     void select();
     void select(char mask);
-    int getCharWidth(int font_end [], uint8_t font_index);
+    int getCharWidth(int font_end [], uint8_t font_height, uint8_t font_index);
     int getCharOffset(int font_end [], uint8_t font_index);
     
   public:
@@ -142,7 +142,7 @@ class HT1632Class
     void clear();
     void drawImage(byte img [], uint8_t width, uint8_t height, int8_t x, int8_t y, int offset = 0);
     void drawText(char text [], int x, int y, byte font [], int font_end [], uint8_t font_height, uint8_t gutter_space = 1);
-    int getTextWidth(char text [], int font_end [], uint8_t gutter_space = 1);
+    int getTextWidth(char text [], int font_end [], uint8_t font_height, uint8_t gutter_space = 1);
     void setBrightness(char brightness, char selectionmask = 0b00010000);
 };
 

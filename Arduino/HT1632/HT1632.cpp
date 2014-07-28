@@ -33,7 +33,7 @@ void HT1632Class::drawText(char text [], int x, int y, byte font [], int font_en
 			break; // Stop rendering - all other characters are no longer within the screen 
 		
 		// Check to see if character is not too far left.
-		int chr_width = getCharWidth(font_end, currchar);
+		int chr_width = getCharWidth(font_end, font_height, currchar);
 		if(curr_x + chr_width + gutter_space >= 0){
 			drawImage(font, chr_width, font_height, curr_x, y,  getCharOffset(font_end, currchar));
 			
@@ -48,7 +48,7 @@ void HT1632Class::drawText(char text [], int x, int y, byte font [], int font_en
 }
 
 // Gives you the width, in columns, of a particular string.
-int HT1632Class::getTextWidth(char text [], int font_end [], uint8_t gutter_space) {
+int HT1632Class::getTextWidth(char text [], int font_end [], uint8_t font_height, uint8_t gutter_space) {
 	int wd = 0;
 	char i = 0;
 	char currchar;
@@ -68,18 +68,20 @@ int HT1632Class::getTextWidth(char text [], int font_end [], uint8_t gutter_spac
 			continue; // Skip this character.
 		}
 
-		wd += getCharWidth(font_end, currchar) + gutter_space;
+		wd += getCharWidth(font_end, font_height, currchar) + gutter_space;
 		++i;
 	}
 }
 
-int HT1632Class::getCharWidth(int font_end [], uint8_t font_index) {
+int HT1632Class::getCharWidth(int font_end [], uint8_t font_height, uint8_t font_index) {
+	uint8_t bytesPerColumn = (font_height >> 3) + ((font_height & 0b111)?1:0); // Assumes that PIXELS_PER_BYTE is 8
+
 	if(font_index == 0) {
 		return font_end[0];
 	}
 	// The width is the difference between the ending index of
 	//  this and the previous characters:
-	return font_end[font_index] - font_end[font_index - 1];
+	return (font_end[font_index] - font_end[font_index - 1])/bytesPerColumn;
 }
 
 int HT1632Class::getCharOffset(int font_end [], uint8_t font_index) {
@@ -195,10 +197,8 @@ void HT1632Class::drawTarget(uint8_t targetBuffer) {
 #endif
 
 void HT1632Class::drawImage(byte * img, uint8_t width, uint8_t height, int8_t x, int8_t y, int img_offset) {
-	uint8_t bytesPerColumn = height/PIXELS_PER_BYTE;
-	// Equivalent to taking Math.ceil(), without working with floats
-	if (bytesPerColumn * PIXELS_PER_BYTE < height)
-		bytesPerColumn++;
+	// Assuming that we are using 8 PIXELS_PER_BYTE, this does the equivalent of Math.ceil(height/PIXELS_PER_BYTE):
+	uint8_t bytesPerColumn = (height >> 3) + ((height & 0b111)?1:0);
 
 	// Sanity checks
 	if(y + height < 0 || x + width < 0 || y > COM_SIZE || x > OUT_SIZE)
