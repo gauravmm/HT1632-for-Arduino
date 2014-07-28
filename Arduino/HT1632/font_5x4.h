@@ -6,6 +6,9 @@
  * Gaurav Manek, 2011
  */
 
+#ifndef __FONT5X4_H
+#define __FONT5X4_H
+
 #define FONT_5X4_HEIGHT  5
 // Number of bytes per glyph 
 
@@ -87,3 +90,4 @@ int FONT_5X4_END [] = {
   193, 196, 200, 202, 206, 208, 211, 214
 };
 
+#endif  // __FONT5X4_H
