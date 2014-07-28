@@ -6,7 +6,7 @@
  * functions go here:
  */
 
-void HT1632Class::drawText(const char text [], int x, int y, byte font [], int font_end [], uint8_t font_height, uint8_t gutter_space) {
+void HT1632Class::drawText(char text [], int x, int y, byte font [], int font_end [], uint8_t font_height, uint8_t gutter_space) {
 	int curr_x = x;
 	char i = 0;
 	char currchar;
@@ -48,7 +48,7 @@ void HT1632Class::drawText(const char text [], int x, int y, byte font [], int f
 }
 
 // Gives you the width, in columns, of a particular string.
-int HT1632Class::getTextWidth(const char text [], int font_end [], uint8_t gutter_space) {
+int HT1632Class::getTextWidth(char text [], int font_end [], uint8_t gutter_space) {
 	int wd = 0;
 	char i = 0;
 	char currchar;
@@ -194,7 +194,7 @@ void HT1632Class::drawTarget(uint8_t targetBuffer) {
 	#error "The current drawImage implementation requires PIXELS_PER_BYTE == 8"
 #endif
 
-void HT1632Class::drawImage(const byte * img, uint8_t width, uint8_t height, int8_t x, int8_t y, int img_offset) {
+void HT1632Class::drawImage(byte * img, uint8_t width, uint8_t height, int8_t x, int8_t y, int img_offset) {
 	uint8_t bytesPerColumn = height/PIXELS_PER_BYTE;
 	// Equivalent to taking Math.ceil(), without working with floats
 	if (bytesPerColumn * PIXELS_PER_BYTE < height)

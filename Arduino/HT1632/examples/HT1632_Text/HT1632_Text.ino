@@ -21,5 +21,5 @@ void loop () {
   
   i = (i+1)%(wd + OUT_SIZE);
   
-  delay(50);
+  delay(100);
 }
