@@ -1,17 +1,52 @@
-/* 
- * 8-high FONT FOR RENDERING TO THE LED SCREEN.
- * 8 pixels-per-byte, variable width.
- *
- * By Gaurav Manek, 2014.
- * Based loosely on the font by Louis Roy, based on 7x5 by David Soyez, 2013
- */
+<!DOCTYPE html PUBLIC "-
+<html xmlns="http:
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Font Upgrade</title>
+<style type="text/css">
+html, body {
+	height: 100%;
+}
+</style>
+<script type="text/javascript">
 
-#ifndef __FONT8X4_H
-#define __FONT8X4_H
+function loadImage() {
+	var FONT_CODE = stripComments($('font-code').value);
+	
+	var FONT_CODE_WIDTH = FONT_CODE.split("\n").map(function (x){return (x.match(/0b/g) || []).length});
+	
+	var rv = "int FONT_NAME_END [] = {";
 
-#define FONT_8X4_HEIGHT  8
+	sum = 0;
+	for (var i = 0; i < FONT_CODE_WIDTH.length; i++) {
+		sum += FONT_CODE_WIDTH[i];
+		if (i % 8 == 0) {
+			rv += "\n\t";
+		}
+		rv += ("    " + sum).slice(-4) + ",";
+	};
 
-byte FONT_8X4 [] = {
+	rv = rv.substring(0, rv.length - 1); // Remove the trailing ,
+	rv += "\n};";
+
+	$('binary_out').innerHTML = rv;
+}
+
+function stripComments(str){
+	return str.replace(/\/\/.*$/gm, '');
+}
+
+function $(e){
+	return document.getElementById(e);
+}
+
+window.addEventListener("load", loadImage, false);
+</script>
+</head>
+
+<body>
+Font Code:
+<textarea id="font-code" style="width: 100%; height: 200px;">
   0b00000000,                                                   // SPACE
   0b01110000, 0b11111101, 0b01110000,                           // !
   0b11000000, 0b00000000, 0b11000000,                           // "
@@ -76,17 +111,8 @@ byte FONT_8X4 [] = {
   0b10000001, 0b11111111,                                       // ]
   0b01000000, 0b10000000, 0b01000000,                           // ^
   0b00000001, 0b00000001, 0b00000001, 0b00000001,               // _
-};
-
-int FONT_8X4_END [] = {
-       1,   4,   7,  12,  17,  22,  26,  27,
-      30,  33,  36,  41,  43,  46,  47,  51,
-      55,  58,  62,  66,  70,  74,  78,  82,
-      86,  90,  91,  93,  97, 101, 105, 109,
-     114, 118, 122, 126, 130, 134, 138, 142,
-     146, 149, 153, 157, 161, 166, 171, 175,
-     179, 184, 188, 192, 195, 199, 203, 208,
-     213, 218, 222, 224, 228, 230, 233, 237
-};
-
-#endif  // __FONT8X4_H
+</textarea><br />
+<button onclick="loadImage()">Generate FONT_NAME_END array</button><br />
+<pre id="binary_out" style="width: 100%; height: 100%;"></pre>
+</body>
+</html>

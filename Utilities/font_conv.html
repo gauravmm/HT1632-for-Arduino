@@ -39,7 +39,7 @@ function loadImage() {
 		rv += " // " + String.fromCharCode(32 + i);
 	}
 
-	rv += "\n}\n\n\n\nint FONT_NAME_END [] = {";
+	rv += "\n};\n\n\n\nint FONT_NAME_END [] = {";
 
 	sum = 0;
 	for (var i = 0; i < FONT_CODE_WIDTH.length; i++) {
@@ -51,7 +51,7 @@ function loadImage() {
 	};
 
 	rv = rv.substring(0, rv.length - 1); // Remove the trailing ,
-	rv += "\n}";
+	rv += "\n};";
 
 	$('binary_out').innerHTML = rv;
 }
