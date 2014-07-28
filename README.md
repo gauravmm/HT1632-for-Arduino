@@ -84,7 +84,7 @@ It's use should be self-evident. You can find it in `Utilities/image_drawing.htm
 Font Creation
 -------------
 
-Fonts are defined as a series of images of equal height and variable width. (__Note:__ currently, fonts are limited to at most one byte per column. We'll fix this soon.) The bytes making up each character, from ASCII char 32 (space) onwards, are appended together without any byte alignment.
+Fonts are defined as a series of images of equal height and variable width. (__Note:__ Currently, fonts are only tested to at most one byte per column.) The bytes making up each character, from ASCII char 32 (space) onwards, are appended together without any byte alignment.
 
 An array, `FONT_8X4_END`, encodes information necessary to extract the width and the offset of the character from the font array. The element at position `i` encodes the first index of character `i + 1`.
 
@@ -217,5 +217,5 @@ Future Plans
 
 1. Support for direct pixel access and primitive drawing.
 2. Support for advanced transitions (moving entire screen contents around with a single command).
-3. Support for fonts taller than 8px.
+3. Test support for fonts taller than 8px.
 4. Allow `FONT_8X4_END` arrays to be either 2-byte `int`s or 1-byte `uint8_t`s
