@@ -10,6 +10,8 @@ Because:
  - Bugfixes, notably the ability to copy images of any arbitrary size.
  - Compiled code size.
 
+For example, the 8x4 font has been compressed from 640 bytes to 237 bytes!
+
 
 How to upgrade
 --------------
@@ -19,8 +21,7 @@ __Code__
 1. You need to include `HT1632.h` before `images.h` or any font file.
 2. The newer functions require the images/fonts to be updated.
 3. All calls to `HT1632.drawText` need to have the `font_glyph_step` argument removed.
-4. All calls to `HT1632.getTextWidth` need to have the `font_height` argument removed.
-5. All references to `FONT_NAME_WIDTH` need to be changed to `FONT_NAME_END`.
+4. All references to `FONT_NAME_WIDTH` need to be changed to `FONT_NAME_END`.
 
 __Images__
 
