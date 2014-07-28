@@ -2,7 +2,7 @@
   HT1632.h - Library for communicating with the popular HT1632/HT1632C
   LED controllers. This library provides higher-level access (including
   text drawing) for these chips. Currently, the library supports writing 
-  to a single chip at a time, and has been tested with a single
+  to a single chip at a time, and has been tested with two
   Sure Electronics 3208 5mm red board.
   
   Created by Gaurav Manek, April 8, 2011.
@@ -10,6 +10,14 @@
 */
 #ifndef HT1632_h
 #define HT1632_h
+
+#include <Arduino.h>
+
+// Custom typedefs
+typedef unsigned char uint8_t;
+typedef unsigned char byte;
+// typedef char int8_t;
+
 
 /*
  * USER OPTIONS
@@ -20,6 +28,9 @@
 #define COM_SIZE 8
 #define OUT_SIZE 32
 // COM_SIZE MUST be either 8 or 16.
+
+// Pixels in a single byte of the internal image representation:
+#define PIXELS_PER_BYTE 8
 
 // Target buffer
 // Each board has a "render" buffer, and all boards share one "secondary" buffer. All calls to 
@@ -50,7 +61,7 @@
 
 // Address space size (number of 4-bit words in HT1632 memory)
 // Exactly equal to the number of 4-bit address spaces available.
-#define ADDR_SPACE_SIZE (COM_SIZE*OUT_SIZE/4)
+#define ADDR_SPACE_SIZE (COM_SIZE * OUT_SIZE / PIXELS_PER_BYTE)
 
 // Use N-MOS (if 1) or P-MOS (if 0):
 #define USE_NMOS 1
@@ -58,18 +69,13 @@
 // try changing the value.
 
 // NOTE: THIS HARDCODES THE DIMENSIONS OF THE 3208! CHANGE!
-#define GET_ADDR_FROM_X_Y(_x,_y) ((_x)*2+(_y)/4)
+#define GET_ADDR_FROM_X_Y(_x,_y) ((_x)*((COM_SIZE)/(PIXELS_PER_BYTE))+(_y)/(PIXELS_PER_BYTE))
 
 /*
  * END USER OPTIONS
  * Don't edit anything below unless you know what you are doing!
  */
  
-// Meta-data masks
-#define MASK_NEEDS_REWRITING 0b00010000
-
-// Round up to multiple of 4 function
-
 // NO-OP Definition
 #define NOP(); __asm__("nop\n\t"); 
 // The HT1632 requires at least 50 ns between the change in data and the rising
@@ -108,38 +114,35 @@
 class HT1632Class
 {
   private:  
-    char _pinCS [4];
-    char _numActivePins;
-    char _pinWR;
-    char _pinDATA;
-    char _tgtBuffer;
-    char _globalNeedsRewriting [4];
-    char * mem [5];
+    uint8_t _pinCS [4];
+    uint8_t _numActivePins;
+    uint8_t _pinWR;
+    uint8_t _pinDATA;
+    uint8_t _tgtBuffer;
+    byte * mem [5];
     void writeCommand(char);
-    void writeData(char, char);
-    void writeDataRev(char, char);
+    void writeData(byte, uint8_t);
+    void writeDataRev(byte, uint8_t);
     void writeSingleBit();
-    void initialize(int, int);
+    void initialize(uint8_t, uint8_t);
     void select();
     void select(char mask);
-    
-    // Debugging functions, write to Serial.
-    void writeInt(int);
-    void recursiveWriteUInt(int);
+    int getCharWidth(int font_end [], uint8_t font_height, uint8_t font_index);
+    int getCharOffset(int font_end [], uint8_t font_index);
     
   public:
-    void begin(int pinCS1, int pinWR,  int pinDATA);
-    void begin(int pinCS1, int pinCS2, int pinWR,   int pinDATA);
-    void begin(int pinCS1, int pinCS2, int pinCS3,  int pinWR,   int pinDATA);
-    void begin(int pinCS1, int pinCS2, int pinCS3,  int pinCS4,  int pinWR,   int pinDATA);
-    void sendCommand(char command);
-    void drawTarget(char targetBuffer);
+    void begin(uint8_t pinCS1, uint8_t pinWR,  uint8_t pinDATA);
+    void begin(uint8_t pinCS1, uint8_t pinCS2, uint8_t pinWR,   uint8_t pinDATA);
+    void begin(uint8_t pinCS1, uint8_t pinCS2, uint8_t pinCS3,  uint8_t pinWR,   uint8_t pinDATA);
+    void begin(uint8_t pinCS1, uint8_t pinCS2, uint8_t pinCS3,  uint8_t pinCS4,  uint8_t pinWR,   uint8_t pinDATA);
+    void sendCommand(uint8_t command);
+    void drawTarget(uint8_t targetBuffer);
     void render();
-    void transition(char mode, int time = 1000); // Time is in miliseconds.
+    void transition(uint8_t mode, int time = 1000); // Time is in milliseconds.
     void clear();
-    void drawImage(const char * img, char width, char height, char x, char y, int offset = 0);
-    void drawText(const char [], int x, int y, const char font [], const char font_width [], char font_height, int font_glyph_step, char gutter_space = 1);
-    int getTextWidth(const char [], const char font_width [], char font_height, char gutter_space = 1);
+    void drawImage(byte img [], uint8_t width, uint8_t height, int8_t x, int8_t y, int offset = 0);
+    void drawText(char text [], int x, int y, byte font [], int font_end [], uint8_t font_height, uint8_t gutter_space = 1);
+    int getTextWidth(char text [], int font_end [], uint8_t font_height, uint8_t gutter_space = 1);
     void setBrightness(char brightness, char selectionmask = 0b00010000);
 };
 
