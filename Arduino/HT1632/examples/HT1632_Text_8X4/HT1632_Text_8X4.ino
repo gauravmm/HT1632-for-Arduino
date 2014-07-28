@@ -9,7 +9,7 @@ char disp [] = "Hello, how are you?";
 void setup () {
   HT1632.begin(12, 10, 9);
   
-  wd = HT1632.getTextWidth(disp, FONT_8X4_END);
+  wd = HT1632.getTextWidth(disp, FONT_8X4_END, FONT_8X4_HEIGHT);
 }
 
 void loop () {
