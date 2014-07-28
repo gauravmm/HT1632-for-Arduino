@@ -76,7 +76,6 @@ byte FONT_5X4 [] = {
     0b00001000, 0b00001000, 0b00001000,  // _
 };
 
-// If your number goes above 255, change this to int.
 int FONT_5X4_END [] = {
     1,   2,   5,  10,  14,  19,  23,  24,
    26,  28,  31,  36,  38,  41,  42,  46,
