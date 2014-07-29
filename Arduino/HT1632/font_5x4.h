@@ -12,7 +12,7 @@
 #define FONT_5X4_HEIGHT  5
 // Number of bytes per glyph 
 
-byte FONT_5X4 [] = {
+prog_uchar FONT_5X4 [] PROGMEM = {
     0b00000000,  //  
     0b11101000,  // !
     0b11000000, 0b00000000, 0b11000000,  // "
