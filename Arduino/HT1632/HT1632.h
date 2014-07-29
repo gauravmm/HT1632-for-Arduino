@@ -90,7 +90,6 @@ typedef unsigned char byte;
 #define HT1632_ID_WR  0b101	/* ID = 101 - Write RAM */
 #define HT1632_ID_LEN 3         /* IDs are 3 bits */
 
-// Do note that SYSON has been changed to SYSEN
 #define HT1632_CMD_SYSDIS 0x00	/* CMD= 0000-0000-x Turn off oscil */
 #define HT1632_CMD_SYSEN  0x01	/* CMD= 0000-0001-x Enable system oscil */
 #define HT1632_CMD_LEDOFF 0x02	/* CMD= 0000-0010-x LED duty cycle gen off */
@@ -98,8 +97,8 @@ typedef unsigned char byte;
 #define HT1632_CMD_BLOFF  0x08	/* CMD= 0000-1000-x Blink ON */
 #define HT1632_CMD_BLON   0x09	/* CMD= 0000-1001-x Blink Off */
 #define HT1632_CMD_SLVMD  0x10	/* CMD= 0001-00xx-x Slave Mode */
-#define HT1632_CMD_MSTMD  0x14	/* CMD= 0001-01xx-x Master Mode */
-#define HT1632_CMD_RCCLK  0x18	/* CMD= 0001-10xx-x Use on-chip clock */
+#define HT1632_CMD_MSTMD  0x14 /* CMD= 0001-01xx-x Master Mode, on-chip clock */
+#define HT1632_CMD_RCCLK  0x18  /* CMD= 0001-10xx-x Master Mode, external clock */
 #define HT1632_CMD_EXTCLK 0x1C	/* CMD= 0001-11xx-x Use external clock */
 #define HT1632_CMD_COMS00 0x20	/* CMD= 0010-ABxx-x commons options */
 #define HT1632_CMD_COMS01 0x24	/* CMD= 0010-ABxx-x commons options */
