@@ -22,7 +22,7 @@ function loadImage() {
 	var src = FONT_CODE.split(",").map(function (x){return trim(x).replace("0b", "")});
 	// $('binary_out').value = src.join("+");
 
-	var rv = "byte FONT_NAME [] = {";
+	var rv = "prog_uchar FONT_NAME [] PROGMEM = {";
 	for(var i = 0; i < 64; ++i){
 		sb = i * FONT_CODE_STEP;
 		rv += "\n\t";
