@@ -12,6 +12,7 @@
 #define HT1632_h
 
 #include <Arduino.h>
+#include <avr/pgmspace.h>
 
 // Custom typedefs
 typedef unsigned char uint8_t;

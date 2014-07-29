@@ -1,5 +1,9 @@
 #include "HT1632.h"
 
+#if PIXELS_PER_BYTE != 8
+	#error "The current drawImage, drawText and getTextWidth implementation requires PIXELS_PER_BYTE == 8"
+#endif
+
 /*
  * HIGH LEVEL FUNCTIONS
  * Functions that perform advanced tasks using lower-level
@@ -192,10 +196,6 @@ void HT1632Class::drawTarget(uint8_t targetBuffer) {
 	_tgtBuffer = targetBuffer;
 }
 
-#if PIXELS_PER_BYTE != 8
-	#error "The current drawImage implementation requires PIXELS_PER_BYTE == 8"
-#endif
-
 void HT1632Class::drawImage(byte * img, uint8_t width, uint8_t height, int8_t x, int8_t y, int img_offset) {
 	// Assuming that we are using 8 PIXELS_PER_BYTE, this does the equivalent of Math.ceil(height/PIXELS_PER_BYTE):
 	uint8_t bytesPerColumn = (height >> 3) + ((height & 0b111)?1:0);
@@ -252,7 +252,7 @@ void HT1632Class::drawImage(byte * img, uint8_t width, uint8_t height, int8_t x,
 			dst_copyMask <<= (8 - (dst_y & 0b111) - copyInNextStep);
 
 			// Shift the data to the bits of highest significance
-			uint8_t copyData = img[img_offset + (bytesPerColumn * src_x) + (src_y >> 3)] << (src_y & 0b111);
+			uint8_t copyData = pgm_read_byte(&img[img_offset + (bytesPerColumn * src_x) + (src_y >> 3)]) << (src_y & 0b111);
 			// Shift data to match the destination place value.
 			copyData >>= (dst_y & 0b111);
 
