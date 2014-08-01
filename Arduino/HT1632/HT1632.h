@@ -25,18 +25,50 @@ typedef unsigned char byte;
  * Change these options
  */
 
-// Size of COM and OUT in bits:
-#define COM_SIZE 8
-#define OUT_SIZE 32
-// COM_SIZE MUST be either 8 or 16.
+// Uncomment the line that matches the board you have, or edit the 
+//  settings in the else block:
 
-// Number of color channels. The default is a single color channel.
-#define NUM_CHANNEL 1
+// SureElectronics 32X16 Bicolor LED Dot Matrix Unit Board
+// #define TYPE_3216_BICOLOR 1
 
-// Use N-MOS (if 1) or P-MOS (if 0):
-#define USE_NMOS 1
-// There are known issues with this. If the default doesn't work,
-// try changing the value.
+// SureElectronics 32X08 Monochrome LED Dot Matrix Unit Board
+#define TYPE_3208_MONO 1
+
+// SureElectronics 16X08 Bicolor (emulation)
+// #define TYPE_1608_DEBUG 1
+
+#if defined TYPE_3216_BICOLOR
+  #define COM_SIZE 16
+  #define OUT_SIZE 32
+  #define NUM_CHANNEL 2
+  #define USE_NMOS 1
+#elif defined TYPE_3208_MONO
+  #define COM_SIZE 8
+  #define OUT_SIZE 32
+  #define NUM_CHANNEL 1
+  #define USE_NMOS 1
+#elif defined TYPE_1608_DEBUG
+  #define COM_SIZE 8
+  #define OUT_SIZE 16
+  #define NUM_CHANNEL 2
+  #define USE_NMOS 1
+#else
+  // SET YOUR CUSTOM VALUES HERE, AND COMMENT THE NEXT LINE
+  #error "Pick a board type!"
+
+  // Size of COM and OUT in bits:
+  #define COM_SIZE 8
+  #define OUT_SIZE 32
+  // COM_SIZE MUST be either 8 or 16.
+
+  // Number of color channels. The default is a single color channel.
+  #define NUM_CHANNEL 1
+
+  // Use N-MOS (if 1) or P-MOS (if 0):
+  #define USE_NMOS 1
+  // There are known issues with this. If the default doesn't work,
+  // try changing the value.
+#endif
 
 /*
  * END USER OPTIONS
