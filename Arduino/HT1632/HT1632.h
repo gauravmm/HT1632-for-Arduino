@@ -30,53 +30,28 @@ typedef unsigned char byte;
 #define OUT_SIZE 32
 // COM_SIZE MUST be either 8 or 16.
 
-// Pixels in a single byte of the internal image representation:
-#define PIXELS_PER_BYTE 8
-
-// Target buffer
-// Each board has a "render" buffer, and all boards share one "secondary" buffer. All calls to 
-//   render() draw the contents of the render buffer of the currently selected board to the board
-//   itself. All calls to any drawing function (including clear()) only affect the selected buffer
-//   of the selected board. you can move the contents of the secondary buffer to the render
-//   buffer by calling transition(), with an appropriate transition. See transition() for more details.
-// board_num = [1..4]
-#define BUFFER_BOARD(board_num) ((board_num)-1)
-#define BUFFER_SECONDARY        0x04
-
-// Transition Modes
-// Transitions copies the contents of the "secondary" buffer to the currently selected board buffer.
-//   Pass one of these transition types to the transition() function and the contents of the
-//   "secondary" buffer will be moved to that using some animation. transition() is a blocking function.
-// In all transitions other than the first one, the contents of the board buffer is lost and render()
-//   is automatically called.
-#define TRANSITION_BUFFER_SWAP     0x00
-  // Swap the current buffer and the transition buffer. This is the only transition that preserves
-  //   the contents of the current buffer.
-#define TRANSITION_NONE            0x01
-  // Simply copy the buffer.
-#define TRANSITION_FADE            0x02
-  // Uses the PWM feature to fade through black. Does not preserve current brightness level.
-#define TRANSITION_WIPE_FROM_RIGHT 0x03
-// Wrap settings
-// For advanced rendering (currently only text rendering)
-
-// Address space size (number of 4-bit words in HT1632 memory)
-// Exactly equal to the number of 4-bit address spaces available.
-#define ADDR_SPACE_SIZE (COM_SIZE * OUT_SIZE / PIXELS_PER_BYTE)
+// Number of color channels. The default is a single color channel.
+#define NUM_CHANNEL 1
 
 // Use N-MOS (if 1) or P-MOS (if 0):
 #define USE_NMOS 1
 // There are known issues with this. If the default doesn't work,
 // try changing the value.
 
-// NOTE: THIS HARDCODES THE DIMENSIONS OF THE 3208! CHANGE!
-#define GET_ADDR_FROM_X_Y(_x,_y) ((_x)*((COM_SIZE)/(PIXELS_PER_BYTE))+(_y)/(PIXELS_PER_BYTE))
-
 /*
  * END USER OPTIONS
  * Don't edit anything below unless you know what you are doing!
  */
- 
+
+
+ // Pixels in a single byte of the internal image representation:
+#define PIXELS_PER_BYTE 8
+
+// Address space size (number of 4-bit words in HT1632 memory)
+// Exactly equal to the number of 4-bit address spaces available.
+#define ADDR_SPACE_SIZE (COM_SIZE * OUT_SIZE / PIXELS_PER_BYTE)
+#define GET_ADDR_FROM_X_Y(_x,_y) ((_x)*((COM_SIZE)/(PIXELS_PER_BYTE))+(_y)/(PIXELS_PER_BYTE))
+
 // NO-OP Definition
 #define NOP(); __asm__("nop\n\t"); 
 // The HT1632 requires at least 50 ns between the change in data and the rising
@@ -118,7 +93,8 @@ class HT1632Class
     uint8_t _numActivePins;
     uint8_t _pinWR;
     uint8_t _pinDATA;
-    uint8_t _tgtBuffer;
+    uint8_t _tgtRender;
+    uint8_t _tgtChannel;
     byte * mem [5];
     void writeCommand(char);
     void writeData(byte, uint8_t);
@@ -136,7 +112,8 @@ class HT1632Class
     void begin(uint8_t pinCS1, uint8_t pinCS2, uint8_t pinCS3,  uint8_t pinWR,   uint8_t pinDATA);
     void begin(uint8_t pinCS1, uint8_t pinCS2, uint8_t pinCS3,  uint8_t pinCS4,  uint8_t pinWR,   uint8_t pinDATA);
     void sendCommand(uint8_t command);
-    void drawTarget(uint8_t targetBuffer);
+    void renderTarget(uint8_t targetScreen);
+    void selectChannel(uint8_t channel);
     void render();
     void transition(uint8_t mode, int time = 1000); // Time is in milliseconds.
     void clear();

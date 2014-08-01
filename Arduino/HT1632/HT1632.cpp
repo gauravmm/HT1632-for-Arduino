@@ -133,12 +133,8 @@ void HT1632Class::initialize(uint8_t pinWR, uint8_t pinDATA) {
 	_pinWR = pinWR;
 	_pinDATA = pinDATA;
 	
-	for(uint8_t i=0; i<_numActivePins; ++i){
+	for (uint8_t i = 0; i < _numActivePins; ++i){
 		pinMode(_pinCS[i], OUTPUT);
-		// Allocate new memory for mem
-		mem[i] = (byte *)malloc(ADDR_SPACE_SIZE);
-		drawTarget(i);
-		clear(); // Clean out mem
 	}
 
 	pinMode(_pinWR, OUTPUT);
@@ -146,8 +142,11 @@ void HT1632Class::initialize(uint8_t pinWR, uint8_t pinDATA) {
 	
 	select();
 	
-	mem[4] = (byte *)malloc(ADDR_SPACE_SIZE);
-	drawTarget(4);
+	for (uint8_t i = 0; i < NUM_CHANNEL; ++i) {
+		// Allocate new memory for each channel
+		mem[i] = (byte *)malloc(ADDR_SPACE_SIZE);
+	}
+	// Clear all memory
 	clear();
 
 	// Send configuration to chip:
@@ -191,9 +190,16 @@ void HT1632Class::initialize(uint8_t pinWR, uint8_t pinDATA) {
 	drawTarget(0);
 }
 
-void HT1632Class::drawTarget(uint8_t targetBuffer) {
-	if(targetBuffer == 0x04 || (targetBuffer >= 0 && targetBuffer < _numActivePins))  
-	_tgtBuffer = targetBuffer;
+void HT1632Class::selectChannel(uint8_t channel) {
+	if(channel < NUM_CHANNEL) {
+		_tgtChannel = channel;
+	}
+}
+
+void HT1632Class::renderTarget(uint8_t target) {
+	if(target < _numActivePins) {
+		_tgtRender = channel;
+	}
 }
 
 void HT1632Class::drawImage(byte * img, uint8_t width, uint8_t height, int8_t x, int8_t y, int img_offset) {
@@ -257,8 +263,8 @@ void HT1632Class::drawImage(byte * img, uint8_t width, uint8_t height, int8_t x,
 			copyData >>= (dst_y & 0b111);
 
 			// Perform the copy
-			mem[_tgtBuffer][GET_ADDR_FROM_X_Y(dst_x, dst_y)] =  // Put in destination
-				(mem[_tgtBuffer][GET_ADDR_FROM_X_Y(dst_x, dst_y)] & ~dst_copyMask) | // All bits not in the mask from destination
+			mem[_tgtChannel][GET_ADDR_FROM_X_Y(dst_x, dst_y)] =  // Put in destination
+				(mem[_tgtChannel][GET_ADDR_FROM_X_Y(dst_x, dst_y)] & ~dst_copyMask) | // All bits not in the mask from destination
 				(copyData & dst_copyMask); // All bits in the mask from source
 
 			src_y += copyInNextStep;
@@ -271,25 +277,31 @@ void HT1632Class::drawImage(byte * img, uint8_t width, uint8_t height, int8_t x,
 }
 
 void HT1632Class::clear(){
-	for(char i=0; i < ADDR_SPACE_SIZE; ++i)
-	mem[_tgtBuffer][i] = 0x00; // Needs to be redrawn
+	for(uint8_t c = 0; c < NUM_CHANNEL; ++c) {
+		for(uint8_t i = 0; i < ADDR_SPACE_SIZE; ++i) {
+			mem[c][i] = 0x00; // Needs to be redrawn
+		}
+	}
 }
 
-// Draw the contents of map to screen, for memory addresses that have the needsRedrawing flag
+// Draw the contents of mem
 void HT1632Class::render() {
-	if(_tgtBuffer >= _numActivePins || _tgtBuffer < 0) {
+	if(_tgtRender >= _numActivePins) {
 		return;
 	}
 	
-	select(0b0001 << _tgtBuffer); // Selecting the chip
+	select(0b0001 << _tgtRender); // Selecting the chip
 	
 	writeData(HT1632_ID_WR, HT1632_ID_LEN);
 	writeData(0, HT1632_ADDR_LEN); // Selecting the memory address
 
-	for(uint8_t i = 0; i < ADDR_SPACE_SIZE; ++i) {
-		// Write the higher bits before the the lower bits.
-		writeData(mem[_tgtBuffer][i] >> HT1632_WORD_LEN, HT1632_WORD_LEN); // Write the data in reverse.
-		writeData(mem[_tgtBuffer][i], HT1632_WORD_LEN); // Write the data in reverse.
+	// Write the channels in order
+	for(uint8_t c = 0; c < NUM_CHANNEL; ++c) {
+		for(uint8_t i = 0; i < ADDR_SPACE_SIZE; ++i) {
+			// Write the higher bits before the the lower bits.
+			writeData(mem[c][i] >> HT1632_WORD_LEN, HT1632_WORD_LEN); // Write the data in reverse.
+			writeData(mem[c][i], HT1632_WORD_LEN); // Write the data in reverse.
+		}
 	}
 
 	select(); // Close the stream at the end
@@ -299,53 +311,17 @@ void HT1632Class::render() {
 // Uses the PWM feature to set the brightness.
 void HT1632Class::setBrightness(char brightness, char selectionmask) {
 	if(selectionmask == 0b00010000) {
-	if(_tgtBuffer < _numActivePins)
-		selectionmask = 0b0001 << _tgtBuffer;
-	else
-		return;
+		if(_tgtRender < _numActivePins) {
+			selectionmask = 0b0001 << _tgtRender;
+		} else {
+			return;
+		}
 	}
 	
 	select(selectionmask); 
 	writeData(HT1632_ID_CMD, HT1632_ID_LEN);    // Command mode
 	writeCommand(HT1632_CMD_PWM(brightness));   // Set brightness
 	select();
-}
-
-void HT1632Class::transition(uint8_t mode, int time){
-	if(_tgtBuffer >= _numActivePins || _tgtBuffer < 0)
-	return;
-	
-	switch(mode) {
-	case TRANSITION_BUFFER_SWAP:
-		{
-			byte * tmp = mem[_tgtBuffer];
-			mem[_tgtBuffer] = mem[BUFFER_SECONDARY];
-			mem[BUFFER_SECONDARY] = tmp;
-		}
-		break;
-	case TRANSITION_NONE:
-		for(char i=0; i < ADDR_SPACE_SIZE; ++i)
-			mem[_tgtBuffer][i] = mem[BUFFER_SECONDARY][i]; // Needs to be redrawn 
-		break;
-	case TRANSITION_FADE:
-		time /= 32;
-		for(int i = 15; i > 0; --i) {
-			setBrightness(i);
-			delay(time);
-		}
-		clear();
-		render();
-		delay(time);
-		transition(TRANSITION_BUFFER_SWAP);
-		render();
-		delay(time);
-		for(int i = 2; i <= 16; ++i) {
-			setBrightness(i);
-			delay(time);
-		}
-		break;
-	}
-	
 }
 
 
