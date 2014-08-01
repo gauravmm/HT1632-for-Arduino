@@ -112,96 +112,9 @@ Multiple HT1632s
 
 This library supports up to 4 chips at a time (though technically more can be run concurrently). To take advantage of this, specify multiple CS pins in the initialization.
 
-All drawing occurs on the first display by default. The `drawTarget(BUFFER_BOARD(x))` function allows you to choose to write output to the board selected by `pinCSx`. The example below shows how scrolling text can be implemented using this:
+All rendering occurs on the first display by default. A scrolling text example is available in `HT1632/examples/HT1632_Text_8X4_Multidisplay/`.
 
-```c
-#include <HT1632.h>
-#include <font_5x4.h>
-
-int wd; 
-int i = 0;
-
-void setup () {
-	HT1632.begin(pinCS1, pinCS2, pinWR, pinDATA);
-	wd = HT1632.getTextWidth("Hello, how are you?", FONT_5X4_WIDTH, FONT_5X4_HEIGHT);
-}
-
-void loop () {
-	// Select board 1 as the target of subsequent drawing/rendering operations.
-	HT1632.drawTarget(BUFFER_BOARD(1));
-	HT1632.clear();
-	
-	HT1632.drawText("Hello, how are you?", 2*OUT_SIZE - i, 2,
-		FONT_5X4, FONT_5X4_WIDTH, FONT_5X4_HEIGHT, FONT_5X4_STEP_GLYPH);
-	
-	HT1632.render(); // Board 1's contents is updated.
-	
-	// Select board 2 as the target of subsequent drawing/rendering operations.
-	HT1632.drawTarget(BUFFER_BOARD(2));
-	HT1632.clear();
-	
-	HT1632.drawText("Hello, how are you?", OUT_SIZE - i, 2,
-		FONT_5X4, FONT_5X4_WIDTH, FONT_5X4_HEIGHT, FONT_5X4_STEP_GLYPH);
-	
-	HT1632.render(); // Board 2's contents is updated.
-	
-	i = (i+1)%(wd + OUT_SIZE * 2); // Make it repeating.
-}
-```
-
-Secondary Buffer
-----------------
-
-In addition to one buffer for each board, one additional buffer (the secondary buffer) is provided. It acts like a drawing target in every way, except that it cannot be rendered. `drawTarget(BUFFER_SECONDARY)` function call allows you to select this buffer.
-
-*This buffer is currently of limited use. Future expansions plan to use this for transitions.*
-
-Here's an example showing this buffer being used to render a two-frame animation much more efficiently than redrawing each frame from scratch:
-
-
-```c
-#include <HT1632.h>
-#include <images.h>
-
-void setup () {
-	HT1632.begin(pinCS1, pinWR, pinDATA);
-		
-	// Draw one image on the board buffer.
-	HT1632.drawTarget(BUFFER_BOARD(1)); // This line is unnecessary, this is the default draw target. 
-	HT1632.drawImage(IMG_SPEAKER_A, IMG_SPEAKER_WIDTH, IMG_SPEAKER_HEIGHT, 0, 0);
-	HT1632.drawImage(IMG_MUSICNOTE, IMG_MUSICNOTE_WIDTH, IMG_MUSICNOTE_HEIGHT, 8, 0);
-	HT1632.drawImage(IMG_MUSIC, IMG_MUSIC_WIDTH, IMG_MUSIC_HEIGHT, 13, 1);
-	HT1632.drawImage(IMG_MUSICNOTE, IMG_MUSICNOTE_WIDTH, IMG_MUSICNOTE_HEIGHT, 23, 0);
-	HT1632.drawImage(IMG_MUSICNOTE, IMG_MUSICNOTE_WIDTH, IMG_MUSICNOTE_HEIGHT, 28, 1);
-	
-	// Draw another image on the secondary buffer.
-	HT1632.drawTarget(BUFFER_SECONDARY);
-	HT1632.drawImage(IMG_SPEAKER_B, IMG_SPEAKER_WIDTH, IMG_SPEAKER_HEIGHT, 0, 0);
-	HT1632.drawImage(IMG_MUSICNOTE, IMG_MUSICNOTE_WIDTH, IMG_MUSICNOTE_HEIGHT, 8, 1);
-	HT1632.drawImage(IMG_MUSIC, IMG_MUSIC_WIDTH, IMG_MUSIC_HEIGHT, 13, 0);
-	HT1632.drawImage(IMG_MUSICNOTE, IMG_MUSICNOTE_WIDTH, IMG_MUSICNOTE_HEIGHT, 23, 1);
-	HT1632.drawImage(IMG_MUSICNOTE, IMG_MUSICNOTE_WIDTH, IMG_MUSICNOTE_HEIGHT, 28, 0);
-	
-	HT1632.drawTarget(BUFFER_BOARD(1));
-	HT1632.render(); // Render the initial image.
-}
-
-void loop () {
-	delay(500);
-	
-	HT1632.transition(TRANSITION_BUFFER_SWAP);
-	HT1632.render();
-}
-```
-Notice that all the drawing is done in the setup() function? The loop function just shuffles the data around in memory.
-
-Note: Only three transitions are currently available. 
-
-Transition | Description
------------|------------
-`TRANSITION_BUFFER_SWAP` | Swap the current buffer and the transition buffer. This is the only transition that preserves the contents of the current buffer.
-`TRANSITION_NONE` | Simply copy the buffer.
-`TRANSITION_FADE` | Uses the PWM feature to fade through black. Does not preserve current brightness level.
+Do note that all drawing happens to a single buffer. You need to `clear()` the contents of the buffer if drawing different graphics to different screens. To draw the same image to multiple screens, call `renderTarget()` and `render()` once per target.
 
 
 Bugs & Features
@@ -216,6 +129,5 @@ Future Plans
 ------------
 
 1. Support for direct pixel access and primitive drawing.
-2. Support for advanced transitions (moving entire screen contents around with a single command).
-3. Test support for fonts taller than 8px.
-4. Allow `FONT_8X4_END` arrays to be either 2-byte `int`s or 1-byte `uint8_t`s
+2. Test support for fonts taller than 8px.
+3. Allow `FONT_8X4_END` arrays to be either 2-byte `int`s or 1-byte `uint8_t`s

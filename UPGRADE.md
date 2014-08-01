@@ -16,6 +16,23 @@ For example, the 8x4 font has been compressed from 640 bytes to 237 bytes!
 How to upgrade
 --------------
 
+__Structure__
+
+A single buffer is used for all write operations. This means that the following functions, macros and constants have been removed:
+
+```c
+void HT1632.transition(uint8_t mode, int time = 1000); // Removed
+
+void HT1632.drawTarget(uint8_t targetBuffer); // Replaced by:
+void HT1632.renderTarget(uint8_t targetBuffer);
+
+BUFFER_BOARD(n) // Just use:
+(n - 1)         // Board number of pin to use.
+
+SECONDARY_BUFFER // Removed
+```
+
+
 __Code__
 
 1. You need to include `HT1632.h` before `images.h` or any font file.
