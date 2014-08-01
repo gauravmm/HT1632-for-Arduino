@@ -18,7 +18,7 @@ How to upgrade
 
 __Structure__
 
-A single buffer is used for all write operations. This means that the following functions, macros and constants have been removed:
+A single buffer is used for all compositing operations. The following functions, macros and constants have been removed:
 
 ```c
 void HT1632.transition(uint8_t mode, int time = 1000); // Removed
@@ -32,6 +32,7 @@ BUFFER_BOARD(n) // Just use:
 SECONDARY_BUFFER // Removed
 ```
 
+New mechanisms for working with color channels have been added, and are documented in [the README](README.md)
 
 __Code__
 
