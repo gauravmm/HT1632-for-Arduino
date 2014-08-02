@@ -42,19 +42,8 @@ void loop () {
 }
 ```
 
-Before running the code, go to HT1632.h and change the following definitions, if needed. This needs to be done only __once__.
+Before running the code, go to HT1632.h and check the `USER OPTIONS` section and follow the instructions to specify the type of board you are using.
 
-```c
-// Size of COM and OUT in bits:
-#define COM_SIZE 8
-#define OUT_SIZE 32
-// COM_SIZE MUST be either 8 or 16.
-
-// Use N-MOS (if 1) or P-MOS (if 0):
-#define USE_NMOS 1
-```
-
-The defaults shown here (and in the code) are suitable for the SureElectronics 3208 series display boards.
 
 Explanation
 -----------
@@ -100,6 +89,16 @@ Advanced Use
 
 There are a few examples in `Arduino/HT1632/examples/`.
 
+Bicolor Displays
+----------------
+
+This library natively supports Bicolor displays, using the `selectChannel(n)` function to switch to color channel `n` before rendering images. Calls to `clear()` and `render()` automatically operate on all channels.
+
+__NOTE:__ Make sure you have set the board type in `HT1632.h`. If you specify a wrong `NUM_CHANNEL` value, it won't work properly.
+
+An example is available in `HT1632/examples/HT1632_Heart_Bicolor/`.
+
+
 Brightness Control
 ------------------
 
@@ -115,6 +114,8 @@ This library supports up to 4 chips at a time (though technically more can be ru
 All rendering occurs on the first display by default. A scrolling text example is available in `HT1632/examples/HT1632_Text_8X4_Multidisplay/`.
 
 Do note that all drawing happens to a single buffer. You need to `clear()` the contents of the buffer if drawing different graphics to different screens. To draw the same image to multiple screens, call `renderTarget()` and `render()` once per target.
+
+Multiple HT1632s, each with multiple color channels, are supported natively.
 
 
 Bugs & Features

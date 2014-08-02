@@ -3,7 +3,6 @@
 #include <images.h>
 
 int i = 0;
-int wd;
 
 void setup () {
   HT1632.begin(12, 10, 9);

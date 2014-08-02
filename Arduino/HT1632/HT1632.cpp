@@ -180,14 +180,13 @@ void HT1632Class::initialize(uint8_t pinWR, uint8_t pinDATA) {
 	
 	select();
 	
+	// Clear all screens by default:
 	for(uint8_t i = 0; i < _numActivePins; ++i) {
-		drawTarget(i);
-		clear();
-		// Perform the initial rendering
+		renderTarget(i);
 		render();
 	}
-	// Set drawTarget to default board.
-	drawTarget(0);
+	// Set renderTarget to the first board.
+	renderTarget(0);
 }
 
 void HT1632Class::selectChannel(uint8_t channel) {
@@ -198,7 +197,7 @@ void HT1632Class::selectChannel(uint8_t channel) {
 
 void HT1632Class::renderTarget(uint8_t target) {
 	if(target < _numActivePins) {
-		_tgtRender = channel;
+		_tgtRender = target;
 	}
 }
 
