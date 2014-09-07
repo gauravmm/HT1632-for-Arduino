@@ -3,9 +3,8 @@ HT1632 for Arduino v2.0
 
 __NOTE:__ This new version of the software changes the underlying data format - upgrading is easy and largely automated. See [upgrade instructions](UPGRADE.md).
 
-This is a powerful library that allows an Arduino to interface with the popular __Holtek HT1632C__ LED driver. It allows programmers to directly perform advanced drawing of images and text with minimal code, using a similar "state machine" paradigm to OpenGL.
+This is a powerful library that allows an Arduino to interface with the popular __Holtek HT1632C__ LED driver. It allows programmers to directly perform advanced drawing of images and text with minimal code.
 
-Do note that the (now deprecated) __Holtek HT1632__ LED driver is *theoretically* compatible with this library, but requires slightly different initialization.
 
 Quick Start
 ===========
@@ -94,10 +93,11 @@ Bicolor Displays
 
 This library natively supports Bicolor displays, using the `selectChannel(n)` function to switch to color channel `n` before rendering images. Calls to `clear()` and `render()` automatically operate on all channels.
 
-__NOTE:__ Make sure you have set the board type in `HT1632.h`. If you specify a wrong `NUM_CHANNEL` value, it won't work properly.
-
 An example is available in `HT1632/examples/HT1632_Heart_Bicolor/`.
 
+__NOTE:__ You need to call `HT1632.setCLK(PIN_NUMBER_CLK);` before calling `begin()`, where `PIN_NUMBER_CLK` is the Arduino pin connected to the `CLK` of your Bicolor board. Refer to the example.
+
+__NOTE:__ Make sure you have set the board type in `HT1632.h`. If you specify a wrong `NUM_CHANNEL` value, it won't work properly.
 
 Brightness Control
 ------------------
@@ -125,6 +125,8 @@ Known Issues
 ------------
 
 1. Initialization doesn't automatically assign a single HT1632C as the RC Master - some unknown bug prevents this from working. As a result, multiple HT1632Cs only need the power and data pins connected, leaving the OSC and SYNC pins disconnected.
+
+2. A single Arduino cannot support both a Mono-color and a Bi-color display.
 
 Future Plans
 ------------
