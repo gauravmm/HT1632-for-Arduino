@@ -29,10 +29,10 @@ typedef unsigned char byte;
 //  settings in the else block:
 
 // SureElectronics 32X16 Bicolor LED Dot Matrix Unit Board
-// #define TYPE_3216_BICOLOR 1
+#define TYPE_3216_BICOLOR 1
 
 // SureElectronics 32X08 Monochrome LED Dot Matrix Unit Board
-#define TYPE_3208_MONO 1
+// #define TYPE_3208_MONO 1
 
 // SureElectronics 16X08 Bicolor (emulation)
 // #define TYPE_1608_DEBUG 1
@@ -42,6 +42,8 @@ typedef unsigned char byte;
   #define OUT_SIZE 32
   #define NUM_CHANNEL 2
   #define USE_NMOS 1
+  // Number of chips in a single Bicolor board:
+  #define NUM_ACTIVE_CHIPS 4
 #elif defined TYPE_3208_MONO
   #define COM_SIZE 8
   #define OUT_SIZE 32
@@ -125,6 +127,8 @@ class HT1632Class
     uint8_t _numActivePins;
     uint8_t _pinWR;
     uint8_t _pinDATA;
+    uint8_t _pinCLK;
+    uint8_t _currSelectionMask;
     uint8_t _tgtRender;
     uint8_t _tgtChannel;
     byte * mem [5];
@@ -134,15 +138,17 @@ class HT1632Class
     void writeSingleBit();
     void initialize(uint8_t, uint8_t);
     void select();
-    void select(char mask);
+    void select(uint8_t mask);
     int getCharWidth(int font_end [], uint8_t font_height, uint8_t font_index);
     int getCharOffset(int font_end [], uint8_t font_index);
+    inline void pulseCLK();
     
   public:
     void begin(uint8_t pinCS1, uint8_t pinWR,  uint8_t pinDATA);
     void begin(uint8_t pinCS1, uint8_t pinCS2, uint8_t pinWR,   uint8_t pinDATA);
     void begin(uint8_t pinCS1, uint8_t pinCS2, uint8_t pinCS3,  uint8_t pinWR,   uint8_t pinDATA);
     void begin(uint8_t pinCS1, uint8_t pinCS2, uint8_t pinCS3,  uint8_t pinCS4,  uint8_t pinWR,   uint8_t pinDATA);
+    void setCLK(uint8_t pinCLK);
     void sendCommand(uint8_t command);
     void renderTarget(uint8_t targetScreen);
     void selectChannel(uint8_t channel);

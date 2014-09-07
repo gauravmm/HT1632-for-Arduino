@@ -23,6 +23,7 @@ drawImage		KEYWORD2
 drawText		KEYWORD2
 getTextWidth	KEYWORD2
 setBrightness	KEYWORD2
+setCLK			KEYWORD2
 
 #######################################
 # Constants (LITERAL1)

@@ -161,17 +161,15 @@ void HT1632Class::initialize(uint8_t pinWR, uint8_t pinDATA) {
 	writeData(HT1632_ID_CMD, HT1632_ID_LEN);    // Command mode
 	
 	writeCommand(HT1632_CMD_SYSDIS); // Turn off system oscillator
-	 // N-MOS or P-MOS open drain output and 8 or 16 common option
-#if   USE_NMOS == 1 && COM_SIZE == 8
+	
+	// Custom initialization from each:
+#if defined TYPE_3208_MONO
 	writeCommand(HT1632_CMD_COMS00);
-#elif USE_NMOS == 1 && COM_SIZE == 16
-	writeCommand(HT1632_CMD_COMS01);
-#elif USE_NMOS == 0 && COM_SIZE == 8
-	writeCommand(HT1632_CMD_COMS10);
-#elif USE_NMOS == 0 && COM_SIZE == 16
-	writeCommand(HT1632_CMD_COMS11);
+#elif defined TYPE_3216_BICOLOR
+	writeCommand(HT1632_CMD_COMS00);
+	writeCommand(HT1632_CMD_RCCLK);  // Master Mode, external clock
 #else
-#error Invalid USE_NMOS or COM_SIZE values! Change the values in HT1632.h.
+	writeCommand(HT1632_CMD_COMS00);
 #endif
 
 	writeCommand(HT1632_CMD_SYSEN); //Turn on system
@@ -283,6 +281,60 @@ void HT1632Class::clear(){
 	}
 }
 
+#if defined TYPE_3216_BICOLOR
+// Draw the contents of mem
+void HT1632Class::render() {
+	if(_tgtRender >= _numActivePins) {
+		return;
+	}
+
+	// Write chip-by-chip:
+	uint8_t _pinForCS = _pinCS[_tgtRender];
+	
+	for (uint8_t nChip = 0; nChip < NUM_ACTIVE_CHIPS; ++nChip) {
+		// Select a single sub-chip:
+		digitalWrite(_pinForCS, HIGH);
+		for(uint8_t tmp = 0; tmp < NUM_ACTIVE_CHIPS; tmp++){
+			if (tmp == nChip) {
+				digitalWrite(_pinForCS, LOW);
+				pulseCLK();
+				digitalWrite(_pinForCS, HIGH);
+			} else {
+				pulseCLK();
+			}
+		}
+		
+		// Output data!
+		writeData(HT1632_ID_WR, HT1632_ID_LEN);
+		writeData(0, HT1632_ADDR_LEN); // Selecting the memory address
+
+		// Write the channels in order
+		for(uint8_t c = 0; c < NUM_CHANNEL; ++c) {
+			//for(uint8_t i = (nChip & 0b1)?0:(ADDR_SPACE_SIZE >> 1); i < (nChip & 0b1)?(ADDR_SPACE_SIZE >> 1):ADDR_SPACE_SIZE; ++i) {
+			uint8_t i, iMax;
+
+			if(nChip & 0b1) { // If we're writing to the chips on the left
+				i = 0; // Start from zero
+				iMax = ADDR_SPACE_SIZE/2; // Stop at the halfway point.
+			} else { // If we're writing to the chips on the right
+				i = ADDR_SPACE_SIZE/2; // Start from the halfway point.
+				iMax = ADDR_SPACE_SIZE; // Stop at the end of the buffer.
+			}
+
+			// If we are not (top-row chip)
+			if(!(nChip & 0b10)) {
+				++i; // Write only odd-numbered bytes.
+			}
+
+			for(; i < iMax; i+=2) { // Write every other byte.
+				// Write the higher bits before the the lower bits.
+				writeData(mem[c][i] >> HT1632_WORD_LEN, HT1632_WORD_LEN);
+				writeData(mem[c][i], HT1632_WORD_LEN);
+			}
+		}
+	}
+}
+#elif defined TYPE_3208_MONO
 // Draw the contents of mem
 void HT1632Class::render() {
 	if(_tgtRender >= _numActivePins) {
@@ -305,6 +357,7 @@ void HT1632Class::render() {
 
 	select(); // Close the stream at the end
 }
+#endif
 
 // Set the brightness to an integer level between 1 and 16 (inclusive).
 // Uses the PWM feature to set the brightness.
@@ -360,18 +413,42 @@ void HT1632Class::writeSingleBit() {
 	// Lower it again, in preparation for the next cycle.
 	digitalWrite(_pinWR, LOW);
 }
+
+void HT1632Class::setCLK(uint8_t pinCLK) {
+	_pinCLK = pinCLK;
+	pinMode(_pinCLK, OUTPUT);
+	digitalWrite(_pinCLK, LOW);
+}
+
+inline void HT1632Class::pulseCLK() {
+	digitalWrite(_pinCLK, HIGH);
+	NOP();
+	digitalWrite(_pinCLK, LOW);
+}
+
+#if defined TYPE_3216_BICOLOR
+// This is used to send initialization commands, and so selects all chips
+// in the selected board.
+void HT1632Class::select(uint8_t mask) {
+	for(uint8_t i=0, t=1; i<_numActivePins; ++i, t <<= 1){
+		digitalWrite(_pinCS[i], (t & mask)?LOW:HIGH);
+	}
+	for (uint8_t tmp = 0; tmp < NUM_ACTIVE_CHIPS; tmp++) {
+		pulseCLK();
+	}
+}
+#elif defined TYPE_3208_MONO
 // Choose a chip. This function sets the correct CS line to LOW, and the rest to HIGH
 // Call the function with no arguments to deselect all chips.
 // Call the function with a bitmask (0b4321) to select specific chips. 0b1111 selects all. 
-void HT1632Class::select(char mask) {
-	for(int i=0, t=1; i<_numActivePins; ++i, t <<= 1){
+void HT1632Class::select(uint8_t mask) {
+	for(uint8_t i=0, t=1; i<_numActivePins; ++i, t <<= 1){
 		digitalWrite(_pinCS[i], (t & mask)?LOW:HIGH);
 	}
 }
+#endif
 void HT1632Class::select() {
-	for(int i=0; i<_numActivePins; ++i) {
-		digitalWrite(_pinCS[i], HIGH);
-	}
+	select(0);
 }
 
 HT1632Class HT1632;
