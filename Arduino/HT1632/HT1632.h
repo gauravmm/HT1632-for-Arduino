@@ -155,9 +155,9 @@ class HT1632Class
     void render();
     void transition(uint8_t mode, int time = 1000); // Time is in milliseconds.
     void clear();
-    void drawImage(byte img [], uint8_t width, uint8_t height, int8_t x, int8_t y, int offset = 0);
-    void drawText(char text [], int x, int y, byte font [], int font_end [], uint8_t font_height, uint8_t gutter_space = 1);
-    int getTextWidth(char text [], int font_end [], uint8_t font_height, uint8_t gutter_space = 1);
+    void drawImage(const byte img [], uint8_t width, uint8_t height, int8_t x, int8_t y, int offset = 0);
+    void drawText(const byte text [], int x, int y, const byte font [], int font_end [], uint8_t font_height, uint8_t gutter_space = 1);
+    int getTextWidth(const byte text [], int font_end [], uint8_t font_height, uint8_t gutter_space = 1);
     void setBrightness(char brightness, char selectionmask = 0b00010000);
 };
 
