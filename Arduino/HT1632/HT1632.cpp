@@ -10,7 +10,7 @@
  * functions go here:
  */
 
-void HT1632Class::drawText(char text [], int x, int y, byte font [], int font_end [], uint8_t font_height, uint8_t gutter_space) {
+void HT1632Class::drawText(const byte text [], int x, int y, const byte font [], int font_end [], uint8_t font_height, uint8_t gutter_space) {
 	int curr_x = x;
 	char i = 0;
 	char currchar;
@@ -52,7 +52,7 @@ void HT1632Class::drawText(char text [], int x, int y, byte font [], int font_en
 }
 
 // Gives you the width, in columns, of a particular string.
-int HT1632Class::getTextWidth(char text [], int font_end [], uint8_t font_height, uint8_t gutter_space) {
+int HT1632Class::getTextWidth(const byte text [], int font_end [], uint8_t font_height, uint8_t gutter_space) {
 	int wd = 0;
 	char i = 0;
 	char currchar;
@@ -199,7 +199,7 @@ void HT1632Class::renderTarget(uint8_t target) {
 	}
 }
 
-void HT1632Class::drawImage(byte * img, uint8_t width, uint8_t height, int8_t x, int8_t y, int img_offset) {
+void HT1632Class::drawImage(const byte * img, uint8_t width, uint8_t height, int8_t x, int8_t y, int img_offset) {
 	// Assuming that we are using 8 PIXELS_PER_BYTE, this does the equivalent of Math.ceil(height/PIXELS_PER_BYTE):
 	uint8_t bytesPerColumn = (height >> 3) + ((height & 0b111)?1:0);
 

@@ -11,7 +11,7 @@
 
 #define FONT_8X4_HEIGHT  8
 
-prog_uchar FONT_8X4 [] PROGMEM = {
+const byte FONT_8X4 [] PROGMEM = {
   0b00000000,                                                   // SPACE
   0b01110000, 0b11111101, 0b01110000,                           // !
   0b11000000, 0b00000000, 0b11000000,                           // "
