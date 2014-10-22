@@ -292,17 +292,17 @@ uint8_t HT1632Class::getPixel(uint8_t x, uint8_t y) {
 void HT1632Class::setPixel(uint8_t x, uint8_t y, uint8_t channel) {
 	if( x < 0 || x > OUT_SIZE || y < 0 || y > COM_SIZE )
 		return;
-	mem[channel][GET_ADDR_FROM_X_Y(x, y)] |= (0b1 << PIXELS_PER_BYTE-1) >> (y % PIXELS_PER_BYTE);
+	mem[channel][GET_ADDR_FROM_X_Y(x, y)] |= GET_BIT_FROM_Y(y);
 }
 void HT1632Class::clearPixel(uint8_t x, uint8_t y, uint8_t channel) {
 	if( x < 0 || x > OUT_SIZE || y < 0 || y > COM_SIZE )
 		return;
-	mem[channel][GET_ADDR_FROM_X_Y(x, y)] &= ~((0b1 << PIXELS_PER_BYTE-1) >> (y % PIXELS_PER_BYTE));
+	mem[channel][GET_ADDR_FROM_X_Y(x, y)] &= ~(GET_BIT_FROM_Y(y));
 }
 uint8_t HT1632Class::getPixel(uint8_t x, uint8_t y, uint8_t channel) {
 	if( x < 0 || x > OUT_SIZE || y < 0 || y > COM_SIZE )
 		return 0;
-	return mem[channel][GET_ADDR_FROM_X_Y(x, y)] & (0b1 << PIXELS_PER_BYTE-1) >> (y % PIXELS_PER_BYTE);
+	return mem[channel][GET_ADDR_FROM_X_Y(x, y)] & GET_BIT_FROM_Y(y);
 }
 
 void HT1632Class::fill() {

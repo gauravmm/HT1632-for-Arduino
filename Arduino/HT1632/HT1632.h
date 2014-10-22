@@ -85,6 +85,7 @@ typedef unsigned char byte;
 // Exactly equal to the number of 4-bit address spaces available.
 #define ADDR_SPACE_SIZE (COM_SIZE * OUT_SIZE / PIXELS_PER_BYTE)
 #define GET_ADDR_FROM_X_Y(_x,_y) ((_x)*((COM_SIZE)/(PIXELS_PER_BYTE))+(_y)/(PIXELS_PER_BYTE))
+#define GET_BIT_FROM_Y(_y) ( (0b1 << PIXELS_PER_BYTE-1) >> (y % PIXELS_PER_BYTE) )
 
 // NO-OP Definition
 #define NOP(); __asm__("nop\n\t"); 
