@@ -159,6 +159,15 @@ class HT1632Class
     void drawText(const byte text [], int x, int y, const byte font [], int font_end [], uint8_t font_height, uint8_t gutter_space = 1);
     int getTextWidth(const byte text [], int font_end [], uint8_t font_height, uint8_t gutter_space = 1);
     void setBrightness(char brightness, char selectionmask = 0b00010000);
+    
+    void setPixel(uint8_t x, uint8_t y);
+    void clearPixel(uint8_t x, uint8_t y);
+    uint8_t getPixel(uint8_t x, uint8_t y);
+    void setPixel(uint8_t x, uint8_t y, uint8_t channel);
+    void clearPixel(uint8_t x, uint8_t y, uint8_t channel);
+    uint8_t getPixel(uint8_t x, uint8_t y, uint8_t channel);
+    void fill();
+    void fillAll();
 };
 
 extern HT1632Class HT1632;
