@@ -273,6 +273,51 @@ void HT1632Class::drawImage(const byte * img, uint8_t width, uint8_t height, int
 	}
 }
 
+void HT1632Class::setPixel(uint8_t x, uint8_t y) {
+	if( x < 0 || x > OUT_SIZE || y < 0 || y > COM_SIZE )
+		return;
+	mem[_tgtChannel][GET_ADDR_FROM_X_Y(x, y)] |= (0b1 << PIXELS_PER_BYTE-1) >> (y % PIXELS_PER_BYTE);
+}
+void HT1632Class::clearPixel(uint8_t x, uint8_t y) {
+	if( x < 0 || x > OUT_SIZE || y < 0 || y > COM_SIZE )
+		return;
+	mem[_tgtChannel][GET_ADDR_FROM_X_Y(x, y)] &= ~((0b1 << PIXELS_PER_BYTE-1) >> (y % PIXELS_PER_BYTE));
+}
+uint8_t HT1632Class::getPixel(uint8_t x, uint8_t y) {
+	if( x < 0 || x > OUT_SIZE || y < 0 || y > COM_SIZE )
+		return 0;
+	return mem[_tgtChannel][GET_ADDR_FROM_X_Y(x, y)] & (0b1 << PIXELS_PER_BYTE-1) >> (y % PIXELS_PER_BYTE);
+}
+
+void HT1632Class::setPixel(uint8_t x, uint8_t y, uint8_t channel) {
+	if( x < 0 || x > OUT_SIZE || y < 0 || y > COM_SIZE )
+		return;
+	mem[channel][GET_ADDR_FROM_X_Y(x, y)] |= GET_BIT_FROM_Y(y);
+}
+void HT1632Class::clearPixel(uint8_t x, uint8_t y, uint8_t channel) {
+	if( x < 0 || x > OUT_SIZE || y < 0 || y > COM_SIZE )
+		return;
+	mem[channel][GET_ADDR_FROM_X_Y(x, y)] &= ~(GET_BIT_FROM_Y(y));
+}
+uint8_t HT1632Class::getPixel(uint8_t x, uint8_t y, uint8_t channel) {
+	if( x < 0 || x > OUT_SIZE || y < 0 || y > COM_SIZE )
+		return 0;
+	return mem[channel][GET_ADDR_FROM_X_Y(x, y)] & GET_BIT_FROM_Y(y);
+}
+
+void HT1632Class::fill() {
+	for(uint8_t i = 0; i < ADDR_SPACE_SIZE; ++i) {
+		mem[_tgtChannel][i] = 0xFF;
+	}
+}
+void HT1632Class::fillAll() {
+	for(uint8_t c = 0; c < NUM_CHANNEL; ++c) {
+		for(uint8_t i = 0; i < ADDR_SPACE_SIZE; ++i) {
+			mem[c][i] = 0xFF; // Needs to be redrawn
+		}
+	}
+}
+
 void HT1632Class::clear(){
 	for(uint8_t c = 0; c < NUM_CHANNEL; ++c) {
 		for(uint8_t i = 0; i < ADDR_SPACE_SIZE; ++i) {

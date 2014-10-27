@@ -85,6 +85,7 @@ typedef unsigned char byte;
 // Exactly equal to the number of 4-bit address spaces available.
 #define ADDR_SPACE_SIZE (COM_SIZE * OUT_SIZE / PIXELS_PER_BYTE)
 #define GET_ADDR_FROM_X_Y(_x,_y) ((_x)*((COM_SIZE)/(PIXELS_PER_BYTE))+(_y)/(PIXELS_PER_BYTE))
+#define GET_BIT_FROM_Y(_y) ( (0b1 << PIXELS_PER_BYTE-1) >> (y % PIXELS_PER_BYTE) )
 
 // NO-OP Definition
 #define NOP(); __asm__("nop\n\t"); 
@@ -159,6 +160,15 @@ class HT1632Class
     void drawText(const byte text [], int x, int y, const byte font [], int font_end [], uint8_t font_height, uint8_t gutter_space = 1);
     int getTextWidth(const byte text [], int font_end [], uint8_t font_height, uint8_t gutter_space = 1);
     void setBrightness(char brightness, char selectionmask = 0b00010000);
+    
+    void setPixel(uint8_t x, uint8_t y);
+    void clearPixel(uint8_t x, uint8_t y);
+    uint8_t getPixel(uint8_t x, uint8_t y);
+    void setPixel(uint8_t x, uint8_t y, uint8_t channel);
+    void clearPixel(uint8_t x, uint8_t y, uint8_t channel);
+    uint8_t getPixel(uint8_t x, uint8_t y, uint8_t channel);
+    void fill();
+    void fillAll();
 };
 
 extern HT1632Class HT1632;
