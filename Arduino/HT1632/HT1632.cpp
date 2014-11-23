@@ -10,7 +10,7 @@
  * functions go here:
  */
 
-void HT1632Class::drawText(const byte text [], int x, int y, const byte font [], int font_end [], uint8_t font_height, uint8_t gutter_space) {
+void HT1632Class::drawText(const char text [], int x, int y, const byte font [], int font_end [], uint8_t font_height, uint8_t gutter_space) {
 	int curr_x = x;
 	char i = 0;
 	char currchar;
@@ -52,7 +52,7 @@ void HT1632Class::drawText(const byte text [], int x, int y, const byte font [],
 }
 
 // Gives you the width, in columns, of a particular string.
-int HT1632Class::getTextWidth(const byte text [], int font_end [], uint8_t font_height, uint8_t gutter_space) {
+int HT1632Class::getTextWidth(const char text [], int font_end [], uint8_t font_height, uint8_t gutter_space) {
 	int wd = 0;
 	char i = 0;
 	char currchar;
