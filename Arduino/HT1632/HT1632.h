@@ -12,7 +12,14 @@
 #define HT1632_h
 
 #include <Arduino.h>
-#include <avr/pgmspace.h>
+#ifdef __AVR__
+ #include <avr/io.h>
+ #include <avr/pgmspace.h>
+#elif defined(ESP8266)
+ #include <pgmspace.h>
+#else
+ #define PROGMEM
+#endif
 
 // Custom typedefs
 typedef unsigned char uint8_t;
