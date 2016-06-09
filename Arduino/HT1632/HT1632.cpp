@@ -168,6 +168,8 @@ void HT1632Class::initialize(uint8_t pinWR, uint8_t pinDATA) {
 #elif defined TYPE_3216_BICOLOR
 	writeCommand(HT1632_CMD_COMS00);
 	writeCommand(HT1632_CMD_RCCLK);  // Master Mode, external clock
+#elif defined TYPE_2416_MONO
+	writeCommand(HT1632_CMD_COMS01);
 #else
 	writeCommand(HT1632_CMD_COMS00);
 #endif
@@ -402,6 +404,29 @@ void HT1632Class::render() {
 
 	select(); // Close the stream at the end
 }
+#elif defined TYPE_2416_MONO
+	// Draw the contents of mem
+	void HT1632Class::render() {
+		if (_tgtRender >= _numActivePins) {
+			return;
+		}
+
+		select(0b0001 << _tgtRender); // Selecting the chip
+
+		writeData(HT1632_ID_WR, HT1632_ID_LEN);
+		writeData(0, HT1632_ADDR_LEN); // Selecting the memory address
+
+									   // Write the channels in order
+		for (uint8_t c = 0; c < NUM_CHANNEL; ++c) {
+			for (uint8_t i = 0; i < ADDR_SPACE_SIZE; ++i) {
+				// Write the higher bits before the the lower bits.
+				writeData(mem[c][i] >> HT1632_WORD_LEN, HT1632_WORD_LEN); // Write the data in reverse.
+				writeData(mem[c][i], HT1632_WORD_LEN); // Write the data in reverse.
+			}
+		}
+
+		select(); // Close the stream at the end
+	}
 #endif
 
 // Set the brightness to an integer level between 1 and 16 (inclusive).
@@ -489,6 +514,15 @@ void HT1632Class::select(uint8_t mask) {
 void HT1632Class::select(uint8_t mask) {
 	for(uint8_t i=0, t=1; i<_numActivePins; ++i, t <<= 1){
 		digitalWrite(_pinCS[i], (t & mask)?LOW:HIGH);
+	}
+}
+#elif defined TYPE_2416_MONO
+// Choose a chip. This function sets the correct CS line to LOW, and the rest to HIGH
+// Call the function with no arguments to deselect all chips.
+// Call the function with a bitmask (0b4321) to select specific chips. 0b1111 selects all. 
+void HT1632Class::select(uint8_t mask) {
+	for (uint8_t i = 0, t = 1; i<_numActivePins; ++i, t <<= 1) {
+		digitalWrite(_pinCS[i], (t & mask) ? LOW : HIGH);
 	}
 }
 #endif

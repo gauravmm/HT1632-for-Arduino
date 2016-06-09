@@ -40,6 +40,9 @@ typedef unsigned char byte;
 // SureElectronics 32X08 Monochrome LED Dot Matrix Unit Board
 // #define TYPE_3208_MONO 1
 
+// SureElectronics 24x16 Monochrome LED Dot Matrix Unit Board
+#define TYPE_2416_MONO 1
+
 // SureElectronics 16X08 Bicolor (emulation)
 // #define TYPE_1608_DEBUG 1
 
@@ -53,6 +56,11 @@ typedef unsigned char byte;
 #elif defined TYPE_3208_MONO
   #define COM_SIZE 8
   #define OUT_SIZE 32
+  #define NUM_CHANNEL 1
+  #define USE_NMOS 1
+#elif defined TYPE_2416_MONO
+  #define COM_SIZE 16
+  #define OUT_SIZE 24
   #define NUM_CHANNEL 1
   #define USE_NMOS 1
 #elif defined TYPE_1608_DEBUG
