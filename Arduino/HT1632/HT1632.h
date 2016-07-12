@@ -183,6 +183,8 @@ class HT1632Class
     uint8_t getPixel(uint8_t x, uint8_t y, uint8_t channel);
     void fill();
     void fillAll();
+
+    void scrollLeft();
 };
 
 extern HT1632Class HT1632;
