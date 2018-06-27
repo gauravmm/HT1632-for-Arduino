@@ -307,6 +307,17 @@ uint8_t HT1632Class::getPixel(uint8_t x, uint8_t y, uint8_t channel) {
 	return mem[channel][GET_ADDR_FROM_X_Y(x, y)] & GET_BIT_FROM_Y(y);
 }
 
+void HT1632Class::scrollLeft() {
+	for(uint8_t c=0; c<NUM_CHANNEL; c++) {
+		byte *to = &mem[c][GET_ADDR_FROM_X_Y(0, 0)];
+		byte *from = &mem[c][GET_ADDR_FROM_X_Y(1, 0)];
+
+		memmove(to, from, ADDR_SPACE_SIZE - 1);
+
+		mem[c][ADDR_SPACE_SIZE - 1] = 0x00;
+	}
+}
+
 void HT1632Class::fill() {
 	for(uint8_t i = 0; i < ADDR_SPACE_SIZE; ++i) {
 		mem[_tgtChannel][i] = 0xFF;
