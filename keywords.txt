@@ -6,28 +6,28 @@
 # Datatypes (KEYWORD1)
 #######################################
 
-HT1632			KEYWORD1
+HT1632	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
-begin			KEYWORD2
-sendCommand		KEYWORD2
+begin	KEYWORD2
+sendCommand	KEYWORD2
 renderTarget	KEYWORD2
 selectChannel	KEYWORD2
-render			KEYWORD2
-transition		KEYWORD2
-clear			KEYWORD2
-drawImage		KEYWORD2
-drawText		KEYWORD2
+render	KEYWORD2
+transition	KEYWORD2
+clear	KEYWORD2
+drawImage	KEYWORD2
+drawText	KEYWORD2
 getTextWidth	KEYWORD2
 setBrightness	KEYWORD2
-setCLK			KEYWORD2
+setCLK	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
 #######################################
 
-COM_SIZE		LITERAL1
-OUT_SIZE		LITERAL1
+COM_SIZE	LITERAL1
+OUT_SIZE	LITERAL1
